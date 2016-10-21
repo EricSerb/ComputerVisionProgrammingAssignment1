@@ -1,7 +1,32 @@
+import os
 import cv2
-
+import getpass
+import zipfile
+import requests
 
 color = ('b', 'g', 'r')
+res_dir = 'res'
+
+
+def download(url):
+    if not os.path.exists(res_dir):
+        os.makedirs(res_dir)
+    name = os.path.join(res_dir, os.path.basename(url))
+    auth = ('cap5415', getpass.getpass())
+    data = requests.get(url, auth=auth).content
+    with open(name, 'wb') as out:
+        out.write(data)
+    return name
+
+
+def unzip(path):
+    folder = os.path.join(res_dir, 
+        os.path.splitext(os.path.basename(path))[0])
+    print('Unzipping to: {}'.format(folder))
+    with zipfile.ZipFile(path) as zf:
+        for mem in zf.infolist():
+            img = os.path.basename(mem.filename)
+            zf.extract(mem, os.path.join(folder, img))
 
 
 def grayscale_histo(img):
