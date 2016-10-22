@@ -25,7 +25,7 @@ def download(url):
     if not f_exists(res_dir):
         f_makedir(res_dir)
     name = f_join(res_dir, f_base(url))
-    auth = (getpass('user'), getpass('pswd'))
+    auth = (getpass('user: '), getpass('pswd: '))
     data = wget(url, auth=auth)
     with open(name, 'wb') as out:
         out.write(data.content)
