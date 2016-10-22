@@ -1,37 +1,70 @@
-import os
+'''
+Computer Vision - FSU - CAP5415
+Adam Stallard, Eric Serbousek
+
+Driver for running the various segments of our project.
+Run 'python main.py -h' for info.
+'''
 import argparse as ap
 import pprint as pp
-from utils import download, unzip, res_dir
+from os.path import join, basename, splitext
+from utils import \
+    download, unzip, res_dir, \
+    f_join, f_base, f_splitext
+import aeCIBR as cibr
+import aeSIFT as sift
+import filteredCIBR as fcibr
 
-dataset_src = 'http://www.cs.fsu.edu/~liux/courses/' \
-    'cap5415-2016/class-only/test1.zip'
+from utils import f_join
+
 
 if __name__ == '__main__':
-    
+
     p = ap.ArgumentParser(
         prog='vis_proj',
         formatter_class=ap.ArgumentDefaultsHelpFormatter,
         description='cli')
     
-    p.add_argument(
-        '-m', '--module',
-        default='aeSIFT',
-        help='choose a module to run.')
+    pargs = {
+    #
+    # Add arg in this format:
+    #
+    #   'short' : ('long', { *args }),
+    #
+    # where *args is a dictionary of
+    # keyword arguments used by p.parse_args
+    #
+        'm' : ('module', {
+            'default' : 'aeSIFT',
+            'help' : 'choose a module to run',
+        }),
+        'r' : ('retrieve', {
+            'default' : False,
+            'action' : 'store_true',
+            'help' : 'retrieve web resources',
+        }),
+    }
     
-    p.add_argument(
-        '-r', '--retrieve',
-        default=False,
-        action='store_true',
-        help='retrieve web resources.')
+    # configure
+    src = 'http://www.cs.fsu.edu/~liux/courses/' \
+        'cap5415-2016/class-only/test1.zip'
+    for i in pargs:
+        p.add_argument(
+            '-{}'.format(i), # short
+            '--{}'.format(pargs[i][0]),  # long
+            **pargs[i][1]) # *args
     
+    # setup
     args = p.parse_args()
-    
     if args.retrieve:
-        print('Downloading: {}'.format(os.path.basename(dataset_src)))
-        unzip(download(dataset_src))
+        print('Downloading: {}'.format(f_base(src)))
+        unzip(download(src))
     
-    datapath = os.path.join(res_dir, 
-        os.path.splitext(os.path.basename(dataset_src))[0])
-    print('Dataset: {}'.format(datapath))
+    dat = f_join(res_dir, f_splitext(f_base(src))[0])
+    print('Dataset: {}'.format(dat))
     
-    
+    # tests
+    for mod in (cibr, sift, fcibr):
+        mod.runtest()
+        
+        

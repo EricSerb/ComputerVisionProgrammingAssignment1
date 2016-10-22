@@ -1,32 +1,45 @@
-import os
+'''
+Computer Vision - FSU - CAP5415
+Adam Stallard, Eric Serbousek
+
+General utilties module for the project that will be used to make module 
+code cleaner and more readable, and mainly shorter :p
+'''
 import cv2
-import getpass
 import zipfile
-import requests
+from requests import get as wget
+from getpass import getpass
+from os import makedirs as f_mkdir
+from os.path \
+    import exists as f_exists, \
+    join as f_join, \
+    basename as f_base, \
+    splitext as f_splitext
+
 
 color = ('b', 'g', 'r')
 res_dir = 'res'
 
 
 def download(url):
-    if not os.path.exists(res_dir):
-        os.makedirs(res_dir)
-    name = os.path.join(res_dir, os.path.basename(url))
-    auth = ('cap5415', getpass.getpass())
-    data = requests.get(url, auth=auth).content
+    if not f_exists(res_dir):
+        f_makedir(res_dir)
+    name = f_join(res_dir, f_base(url))
+    auth = (getpass('user'), getpass('pswd'))
+    data = wget(url, auth=auth)
     with open(name, 'wb') as out:
-        out.write(data)
+        out.write(data.content)
     return name
 
 
 def unzip(path):
-    folder = os.path.join(res_dir, 
-        os.path.splitext(os.path.basename(path))[0])
-    print('Unzipping to: {}'.format(folder))
+    f = f_join(res_dir, 
+        f_splitext(f_base(path))[0])
+    print('Unzipping to: {}'.format(f))
     with zipfile.ZipFile(path) as zf:
         for mem in zf.infolist():
-            img = os.path.basename(mem.filename)
-            zf.extract(mem, os.path.join(folder, img))
+            img = f_base(mem.filename)
+            zf.extract(mem, f_join(f, img))
 
 
 def grayscale_histo(img):
