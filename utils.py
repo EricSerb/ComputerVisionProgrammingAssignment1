@@ -17,8 +17,9 @@ from os import \
     makedirs as f_mkdir, \
     listdir as f_list, \
     getcwd as f_cwd
-from os.path \
-    import exists as f_exists, \
+
+from os.path import \
+    exists as f_exists, \
     join as f_join, \
     basename as f_base, \
     splitext as f_splitext
@@ -28,6 +29,7 @@ color = ('b', 'g', 'r')
 res_dir = 'res'
 src = 'http://www.cs.fsu.edu/~liux/courses/' \
         'cap5415-2016/class-only/test1.zip'
+
 
 class Dataset(object):
     '''
@@ -135,20 +137,6 @@ def bilateral_filter(img):
 
 
 def gaussian_filter(img):
-    return cv2.GaussianBlur(img, 3, 1)
+    return cv2.GaussianBlur(img, (3,3), 1)
 
-
-def prec_rec(class_idx, n, match_res):
     
-    n_crrct = float(match_res[class_idx][1][:n].count(True))
-    n_mtchd = sum(match_res[j][1][:n].count(True) 
-        for j in range(len(match_res)))
-    
-    try:
-        p = n_crrct / n_mtchd
-    except ZeroDivisionError:
-        p = 0.0
-        pass
-    r = n_crrct / n
-    return p, r
-

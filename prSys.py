@@ -140,7 +140,7 @@ class Manager(object):
         plt.subplot(111)
         plt.xlabel('Category')
         plt.ylabel('Avg precision')
-        for i, qc in enumerate(self.data):
+        for i, qc in enumerate(self.qry_classes):
             plt.scatter(i, self.prs[qc].pavg, marker=marker)
         plt.xticks([i for i in range(10)], [c for c in self.qry_classes])
         plt.savefig(f_join(self.sub, 'avg_PR.jpg'))
@@ -163,7 +163,7 @@ class Manager(object):
             mpl.cm.rainbow(np.linspace(0, 1, dl))):
             plt.scatter(p, r, s=sz, color=c, alpha=0.5)
         
-        plt.savefig(f_join(self.sub, qc, '_full_.jpg'))        
+        plt.savefig(f_join(self.sub, qc, '_full_.jpg'))
         
     def alltests(self, qcs2plot=['c1', 'c5', 'c9'], N=100):
         assert N > 0 and N < 101
