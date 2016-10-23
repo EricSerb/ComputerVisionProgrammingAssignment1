@@ -5,11 +5,13 @@ Adam Stallard, Eric Serbousek
 Driver for running the various segments of our project.
 Run 'python main.py -h' for info.
 '''
+import sys
 import argparse as ap
 import pprint as pp
 from os.path import join, basename, splitext
+from copy import deepcopy
 from utils import \
-    download, unzip, res_dir, \
+    Dataset, res_dir, \
     f_join, f_base, f_splitext
 import aeCIBR as cibr
 import aeSIFT as sift
@@ -42,7 +44,7 @@ if __name__ == '__main__':
             'default' : False,
             'action' : 'store_true',
             'help' : 'retrieve web resources',
-        }),
+        }), 
     }
     
     # configure
@@ -56,15 +58,13 @@ if __name__ == '__main__':
     
     # setup
     args = p.parse_args()
+    data = Dataset(res=res_dir, src=src)
     if args.retrieve:
-        print('Downloading: {}'.format(f_base(src)))
-        unzip(download(src))
-    
-    dat = f_join(res_dir, f_splitext(f_base(src))[0])
-    print('Dataset: {}'.format(dat))
+        data.unzip(data.download(src))
     
     # tests
+    d = data.get()
     for mod in (cibr, sift, fcibr):
-        mod.runtest()
+        mod.runtest(deepcopy(d))
         
         
