@@ -12,9 +12,6 @@ from operator import itemgetter
 from requests import get as wget
 from getpass import getpass
 import numpy as np
-# import matplotlib as mpl
-# mpl.use('Agg')
-# import matplotlib.pyplot as plt
 
 from os import \
     makedirs as f_mkdir, \
@@ -45,7 +42,7 @@ class Dataset(object):
     def download(self, url):
         print('Downloading: {}'.format(f_base(self.src)))
         if not f_exists(res_dir):
-            f_makedir(res_dir)
+            f_mkdir(res_dir)
         name = f_join(res_dir, f_base(url))
         auth = (getpass('user: '), getpass('pswd: '))
         data = wget(url, auth=auth)
@@ -66,6 +63,8 @@ class Dataset(object):
         for f in f_list(self.imgs):
             p = f_join(f_cwd(), f_join(self.imgs, f))
             c = 'c{}'.format((int(f_splitext(f)[0]) // 100) + 1)
+            # yes i know, we are putting everything in memory here
+            # my system only goes up to about 6 GB during runtime
             data.setdefault(c, []).append((f, cv2.imread(p)))
         print('done.')
         return data
@@ -128,8 +127,8 @@ def bilateral_filter(img):
     return cv2.bilateralFilter(img, 3, 5, 3)
 
 
-def box_filter(img):
-    return cv2.boxFilter(img, -1, 3)
+# def box_filter(img):
+    # return cv2.boxFilter(img, -1, 3)
 
 
 def gaussian_filter(img):

@@ -64,6 +64,7 @@ if __name__ == '__main__':
     
     # tests
     d = data.get()
+    
     for mod in (cibr, sift, fcibr):
         mod.runtest(deepcopy(d))
         
