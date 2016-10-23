@@ -51,14 +51,14 @@ class Manager(object):
         # get list of classes
         self.data = data
         self.qry_classes = classes
-        self.sub = sub_f
+        self.sub = f_join(res_dir, sub_f)
         self.imgcmp = cmp
         
         # double check directories are set up
-        if not f_exists(sub_f):
-            f_mkdir(sub_f)
+        if not f_exists(self.sub):
+            f_mkdir(self.sub)
         for qc in self.qry_classes:
-            sub_c = f_join(sub_f, qc)
+            sub_c = f_join(self.sub, qc)
             if not f_exists(sub_c):
                 f_mkdir(sub_c)
         
@@ -74,10 +74,9 @@ class Manager(object):
         assert qc in self.data
         assert i < len(self.data[qc])
         
-        qrys = self.data[qc]
         qi = self.data[qc][i]
         
-        res = { c : [self.imgcmp(o, qi, qc) for o in self.data[qc]] \
+        res = {c : [self.imgcmp(o, qi, qc) for o in self.data[c]] \
             for c in self.data}
         
         P, R = zip(*[self.calcPR(res, qc, n)
@@ -164,10 +163,9 @@ class Manager(object):
             mpl.cm.rainbow(np.linspace(0, 1, dl))):
             plt.scatter(p, r, s=sz, color=c, alpha=0.5)
         
-        plt.savefig(f_join(self.sub, qc, '_full_.jpg'))
+        plt.savefig(f_join(self.sub, qc, '_full_.jpg'))        
         
-        
-    def alltests(self, qcs2plot=[], N=100):
+    def alltests(self, qcs2plot=['c1', 'c5', 'c9'], N=100):
         assert N > 0 and N < 101
         for qc in self.qry_classes:
             for i in range(0, N):

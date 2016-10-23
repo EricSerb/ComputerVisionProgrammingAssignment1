@@ -5,19 +5,13 @@ Adam Stallard, Eric Serbousek
 Driver for running the various segments of our project.
 Run 'python main.py -h' for info.
 '''
-import sys
 import argparse as ap
-import pprint as pp
-from os.path import join, basename, splitext
 from copy import deepcopy
 from utils import \
-    Dataset, res_dir, \
-    f_join, f_base, f_splitext
+    Dataset, res_dir
 import aeCIBR as cibr
 import aeSIFT as sift
 import filteredCIBR as fcibr
-
-from utils import f_join
 
 
 if __name__ == '__main__':
@@ -37,7 +31,6 @@ if __name__ == '__main__':
     # keyword arguments used by p.parse_args
     #
         'm' : ('module', {
-            'default' : 'aeSIFT',
             'help' : 'choose a module to run',
         }),
         'r' : ('retrieve', {
@@ -64,8 +57,17 @@ if __name__ == '__main__':
     
     # tests
     d = data.get()
-    
-    for mod in (cibr, sift, fcibr):
-        mod.runtest(deepcopy(d))
-        
-        
+    if args.module is None:
+        for mod in (cibr, sift, fcibr):
+            mod.runtest(deepcopy(d))
+    else:
+        mod = args.module.lower()
+        if mod in ('1', 'aecibr', 'cibr'):
+            cibr.runtest(deepcopy(d))
+        elif mod in ('2', 'filtered', 'filteredcibr', 'fcibr'):
+            fcibr.runtest(deepcopy(d))
+        elif mod in ('3', 'sift', 'aesift'):
+            sift.runtest(deepcopy(d))
+        else:
+            print('Module {} does not exist.'.format(args.module))
+            

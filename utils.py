@@ -60,13 +60,16 @@ class Dataset(object):
     def get(self):
         data = {}
         print('Loading images...', end=' ')
-        for f in f_list(self.imgs):
-            p = f_join(f_cwd(), f_join(self.imgs, f))
-            c = 'c{}'.format((int(f_splitext(f)[0]) // 100) + 1)
-            # yes i know, we are putting everything in memory here
-            # my system only goes up to about 6 GB during runtime
-            data.setdefault(c, []).append((f, cv2.imread(p)))
-        print('done.')
+        try:
+            for f in f_list(self.imgs):
+                p = f_join(f_cwd(), f_join(self.imgs, f))
+                c = 'c{}'.format((int(f_splitext(f)[0]) // 100) + 1)
+                # yes i know, we are putting everything in memory here
+                # my system only goes up to about 6 GB during runtime
+                data.setdefault(c, []).append((f, cv2.imread(p)))
+            print('done.')
+        except FileNotFoundError:
+            print('Did you forget to download the data with \'-r\'?')
         return data
 
 
