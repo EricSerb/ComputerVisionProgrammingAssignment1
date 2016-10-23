@@ -38,19 +38,20 @@ class PR(object):
         self.save.append((P, R))
         self.n += 1
     
-    
+import sys
 class Manager(object):
     '''
     Manages pr calculations and maintains state for 
     avergaing, plotting, etc.
     '''
-    def __init__(self, data, classes, sub_f, cmp=(lambda a, b, c: True)):
+    def __init__(self, data, sub_f, cmp=(lambda a, b, c: True)):
         
         assert type(classes) == tuple 
         
         # get list of classes
         self.data = data
-        self.qry_classes = classes
+        self.qry_classes = ['c{}'.format(i) for i in sorted(int(c[1:]) for c in data)]
+        sys.exit()
         self.sub = f_join(res_dir, sub_f)
         self.imgcmp = cmp
         
@@ -165,12 +166,12 @@ class Manager(object):
         
         plt.savefig(f_join(self.sub, qc, '_full_.jpg'))
         
-    def alltests(self, qcs2plot=['c1', 'c5', 'c9'], N=100):
+    def alltests(self, qcs2plot=['c1', 'c5', 'c9'], N=10):
         assert N > 0 and N < 101
         for qc in self.qry_classes:
             for i in range(0, N):
                 p = (qc in qcs2plot)
-                self.test(qc, i, plot=p)
+                self.test(qc, i, plot=False)
                 
         # after all tests are run create the full PR plots
         # -- these use the PR results for every qry img,

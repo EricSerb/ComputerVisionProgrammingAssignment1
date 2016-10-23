@@ -37,9 +37,8 @@ def runtest(d):
     
     t = time.time()
     
-    qry_classes = tuple('c{}'.format(i) for i in range(1, 11))
-    # manage = Manager(d, qry_classes, __name__, cmp=mycomparer)
-    # manage.alltests()
+    manage = Manager(d, __name__, cmp=mycomparer)
+    manage.alltests()
     
     print(time.time() - t, 'sec')
     
