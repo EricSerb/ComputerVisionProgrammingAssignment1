@@ -7,7 +7,7 @@ Run 'python main.py -h' for info.
 '''
 import argparse as ap
 from copy import deepcopy
-from utils import \
+from data import \
     Dataset, res_dir
 import aeCIBR as cibr
 import aeSIFT as sift

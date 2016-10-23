@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-from utils import f_exists, f_join, f_mkdir, res_dir
+from data import f_exists, f_join, f_mkdir, res_dir
 
 
 class PR(object):
@@ -164,7 +164,7 @@ class Manager(object):
         
         plt.savefig(f_join(self.sub, qc, '_full_.jpg'))
         
-    def alltests(self, qcs2plot=['c1', 'c5', 'c9'], N=100):
+    def alltests(self, qcs2plot=['c1', 'c5', 'c9'], N=2):
         assert N > 0 and N < 101
         for qc in self.qry_classes:
             for i in range(0, N):

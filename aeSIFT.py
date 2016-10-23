@@ -39,7 +39,7 @@ def mycomparer(a, b, qc):
     return cmp_img(t_hist, im2, norms, thresh)
     
     
-def mycomparer(a, b, qc):
+def mycomparer2(a, b, qc):
     
     i2, i1 = a[0], b[0]
     im2, im1 = a[1], b[1]
