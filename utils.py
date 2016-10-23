@@ -137,10 +137,11 @@ def gaussian_filter(img):
 
 
 def prec_rec(class_idx, n, match_res):
+    
     n_crrct = float(match_res[class_idx][1][:n].count(True))
     n_mtchd = sum(match_res[j][1][:n].count(True) 
         for j in range(len(match_res)))
-    print(n_mtchd)
+    
     try:
         p = n_crrct / n_mtchd
     except ZeroDivisionError:
