@@ -71,15 +71,12 @@ def runtest(d):
             t_hist = color_histo(t[1])
             thresh = color_thresh(t_hist)
             norms = tuple(cv2.compareHist(t, t, cv2.HISTCMP_INTERSECT) for t in t_hist)
+            
             res = [('c' + str(k), [cmp_img(t_hist, i[1], norms, thresh) \
                 for i in d['c' + str(k)]]) \
                 for k in sorted(int(s[1:]) for s in d.keys())]
             
             
-            # for n in range(1, len(res[0][1])):
-                # p, r = prec_rec(int(t[0][1:])-1, n, res)
-                # print(p, r, t[0])
-                # sys.exit()
             P, R = zip(*[prec_rec(int(t[0][1:])-1, n, res) \
                 for n in range(1, len(res[0][1]))])
             
