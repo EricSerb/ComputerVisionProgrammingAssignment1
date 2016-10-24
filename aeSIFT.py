@@ -32,7 +32,8 @@ import matplotlib.pyplot as plt
 
 saved_cmp = {}
 bestCount = {}
-debugging = True
+class_counts = {}
+debugging = False
 sift = cv2.xfeatures2d.SIFT_create()
 def mycomparer(a, b, qc, qc2=None):
     global sift
@@ -74,7 +75,7 @@ def mycomparer(a, b, qc, qc2=None):
     # ratio test as per Lowe's paper
     matchCount = 0
     for i,(m,n) in enumerate(matches):
-        if m.distance < 0.75 * n.distance:
+        if m.distance < 0.85 * n.distance:
             matchCount += 1
             matchesMask[i] = [1,0]
     
@@ -101,9 +102,24 @@ def mycomparer(a, b, qc, qc2=None):
             bestCount[qc] = matchCount
         if matchCount > bestCount[qc]:
             bestCount[qc] = matchCount
-    
-    
-    return matchCount > 3 # lol
+
+    # print('i1:', i1, 'c1:', qc)
+    # print('i2:', i2, 'c2:', qc2)
+    # print('matches:', matchCount)
+    # print('---------------OK---------------')
+
+    if qc in class_counts:
+        if qc == qc2:
+            class_counts[qc].append(matchCount)
+    else:
+        class_counts[qc] = []
+        if qc == qc2:
+            class_counts[qc].append(matchCount)
+    if i1 == '999.jpg' and i2 == '999.jpg':
+        fd = open('counts.txt', 'w')
+        for key in class_counts.keys():
+            fd.write(key + ' ' + str(sum(class_counts[key])/len(class_counts[key])))
+    return matchCount > 37 # lol
     
     
 def runtest(d):
@@ -112,7 +128,7 @@ def runtest(d):
     t = time.time()
     
     manage = Manager(d, __name__, cmp=mycomparer)
-    manage.alltests(N=2)
+    manage.alltests(N=100)
     # manage.alltests(qcs2plot=['c5'], N=100)
     
     print(time.time() - t, 'sec')
