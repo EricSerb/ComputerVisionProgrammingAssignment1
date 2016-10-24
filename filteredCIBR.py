@@ -10,7 +10,7 @@ import time
 
 
 saved_cmp = {}
-def mycomparer(a, b, qc):
+def mycomparer(a, b, qc, qc2):
     
     i2, i1 = a[0], b[0]
     im2, im1 = a[1], b[1]

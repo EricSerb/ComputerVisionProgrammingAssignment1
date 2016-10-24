@@ -75,8 +75,8 @@ class Manager(object):
         
         qi = self.data[qc][i]
         
-        res = {c : [self.imgcmp(o, qi, qc) for o in self.data[c]] \
-            for c in self.data}
+        res = {c : [self.imgcmp(o, qi, qc, c) for o in self.data[c]] \
+            for c in self.qry_classes}
         
         P, R = zip(*[self.calcPR(res, qc, n)
             for n in range(1, len(res[qc]))])
@@ -164,12 +164,12 @@ class Manager(object):
         
         plt.savefig(f_join(self.sub, qc, '_full_.jpg'))
         
-    def alltests(self, qcs2plot=['c1', 'c5', 'c9'], N=2):
+    def alltests(self, qcs2plot=['c1', 'c5', 'c9'], N=100):
         assert N > 0 and N < 101
         for qc in self.qry_classes:
             for i in range(0, N):
                 p = (qc in qcs2plot)
-                self.test(qc, i, plot=False)
+                self.test(qc, i, plot=p)
                 
         # after all tests are run create the full PR plots
         # -- these use the PR results for every qry img,

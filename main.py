@@ -27,7 +27,7 @@ if __name__ == '__main__':
     #
     #   'short' : ('long', { *args }),
     #
-    # where *args is a dictionary of
+    # where { *args } is a dictionary of
     # keyword arguments used by p.parse_args
     #
         'm' : ('module', {

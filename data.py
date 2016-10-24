@@ -5,7 +5,6 @@ Adam Stallard, Eric Serbousek
 General utilties module for the project that will be used to make module 
 code cleaner and more readable, and mainly shorter :p
 '''
-import sys
 from cv2 import imread
 import zipfile
 from requests import get as wget
@@ -59,15 +58,22 @@ class Dataset(object):
     
     def get(self):
         data = {}
-        print('Loading images...', end=' ')
+        print('Loading images...')
         try:
-            for f in f_list(self.imgs):
+            
+            myfiles = f_list(self.imgs)
+            sortedf = sorted([int(f_splitext(f)[0]) for f in myfiles])
+            myfiles = ['{}.jpg'.format(i) for i in sortedf]
+            
+            for f in myfiles:
                 p = f_join(f_cwd(), f_join(self.imgs, f))
                 c = 'c{}'.format((int(f_splitext(f)[0]) // 100) + 1)
                 # yes i know, we are putting everything in memory here
                 # my system only goes up to about 6 GB during runtime
                 data.setdefault(c, []).append((f, imread(p)))
             print('done.')
-        except FileNotFoundError:
+        except (OSError, IOError) as e:
             print('Did you forget to download the data with \'-r\'?')
+            print('Or maybe check your permissions?')
+            raise e
         return data
