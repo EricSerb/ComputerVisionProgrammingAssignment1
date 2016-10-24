@@ -48,8 +48,6 @@ def runtest(d, cases, debug=False):
             p2 = 'worst = ' + qc + ' : ' + d[qc][manage.prs[qc].wrst[-1]][0] + '\n'
             fd.write(p1)
             fd.write(p2)
-        # fd.write((qc, manage.prs[qc].best) for qc in d)
-        # fd.write((qc, manage.prs[qc].wrst) for qc in d)
         fd.write('end_________________')
     
     print(time.time() - t, 'sec')
