@@ -18,23 +18,24 @@ class PR(object):
         self.save = []
         self.best = None
         self.wrst = None
-        self.pavg = None
+        self.pavg = []
         self.n = 0
-    
-    def feed(self, p, r):
-        assert type(p) == type(r) == float
-        self._update(p, r)
-    
-    def _update(self, P, R):
+
+    def feed(self, P, R, i):
         if not self.n:
-            self.best = self.wrst = (P, R)
-            self.pavg = P
+            self.best = self.wrst = (P[-1], R[-1], i)
         else:
-            if (P*R) > (self.best[0] * self.best[1]):
-                self.best = (P, R)
-            if (P*R) < (self.wrst[0] * self.wrst[1]):
-                self.wrst = (P, R)
-            self.pavg = ((self.pavg * self.n) + P) / (self.n + 1)
+            if (P[-1]*R[-1]) > (self.best[0] * self.best[1]):
+                self.best = (P[-1], R[-1], i)
+            if (P[-1]*R[-1]) < (self.wrst[0] * self.wrst[1]):
+                self.wrst = (P[-1], R[-1], i)
+
+        # print(P)
+        # print(sum(P[e-1]/e for e in range(1, len(P) + 1)))
+        # print(len(P))
+        # import sys
+        # sys.stdin.readline()
+        self.pavg.append(sum(P) / len(P))
         self.save.append((P, R))
         self.n += 1
     
@@ -78,12 +79,12 @@ class Manager(object):
         res = {c : [self.imgcmp(o, qi, qc, c) for o in self.data[c]] \
             for c in self.qry_classes}
         
-        P, R = zip(*[self.calcPR(res, qc, n)
-            for n in range(1, len(res[qc]))])
+        P, R= zip(*[self.calcPR(res, qc, n)
+            for n in range(1, len(res[qc]) + 1)])
         
         # feed the running pr totals with the last PR
         # (i.e. the one ran for n == 100 images)
-        self.prs[qc].feed(P[-1], R[-1])
+        self.prs[qc].feed(P, R, i)
         if plot:
             self.plotPR(qc, i, P, R)
     
@@ -141,7 +142,7 @@ class Manager(object):
         plt.xlabel('Category')
         plt.ylabel('Avg precision')
         for i, qc in enumerate(self.qry_classes):
-            plt.scatter(i, self.prs[qc].pavg, marker=marker)
+            plt.scatter(i, sum(self.prs[qc].pavg) / len(self.prs[qc].pavg), marker=marker)
         plt.xticks([i for i in range(10)], [c for c in self.qry_classes])
         plt.savefig(f_join(self.sub, 'avg_PR.jpg'))
         return fig

@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 saved_flann = None
 def mytrainer(qc, descs):
     global saved_flann
-    print('Training {} with {} descriptors'.format(qc, len(descs)))
+    #print('Training {} with {} descriptors'.format(qc, len(descs)))
     if saved_flann is None:
         saved_flann = cv2.FlannBasedMatcher(
             {'algorithm' : 1, 'trees' : 5},
@@ -57,7 +57,7 @@ saved_descs = {}
 def getfeatures(qc, img):
     if qc not in saved_descs:
         saved_descs[qc] = {}
-    kp, ds = sift.detectAndCompute(img[1], None)
+    kp, ds = sift.detectAndCompute(cv2.cvtColor(img[1], cv2.COLOR_BGR2HSV), None)
     saved_descs[qc][img[0]] = ds
     # return ds
 
@@ -184,12 +184,20 @@ def runtest(d, cases, debug=False):
     print('done.')
     
     print('Training matchers...')
-    for qc in d:
-        mytrainer(qc, [saved_descs[qc][i[0]] for i in d[qc]])
+    mytrainer(qc, [saved_descs[qc][i[0]] for qc in d for i in d[qc]])
     print('done.')
     
     manage = Manager(d, __name__, cmp=mycomparer)
     manage.alltests(N=100, pick3=cases)
-    
+
+    with open('.'.join((__name__, 'txt')), 'wb+') as fd:
+        fd.write('start_________________')
+        fd.write(__name__ + '\n')
+        for qc in d:
+            p1 = 'best = ' + qc + ' : ' + d[qc][manage.prs[qc].best[-1]][0] + '\n'
+            p2 = 'worst = ' + qc + ' : ' + d[qc][manage.prs[qc].wrst[-1]][0] + '\n'
+            fd.write(p1)
+            fd.write(p2)
+        fd.write('end_________________')
+
     print(time.time() - t, 'sec')
-    
