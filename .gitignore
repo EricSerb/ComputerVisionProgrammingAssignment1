@@ -8,3 +8,5 @@ prSys
 prSys/*
 prtest
 prtest/*
+*.txt
+*.png

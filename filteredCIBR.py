@@ -39,6 +39,16 @@ def runtest(d, cases, debug=False):
     
     manage = Manager(d, __name__, cmp=mycomparer)
     manage.alltests(pick3=cases)
+
+    with open('.'.join((__name__, 'txt')), 'wb+') as fd:
+        fd.write('start_________________')
+        fd.write(__name__ + '\n')
+        for qc in d:
+            p1 = 'best = ' + qc + ' : ' + d[qc][manage.prs[qc].best[-1]][0] + '\n'
+            p2 = 'worst = ' + qc + ' : ' + d[qc][manage.prs[qc].wrst[-1]][0] + '\n'
+            fd.write(p1)
+            fd.write(p2)
+        fd.write('end_________________')
     
     print(time.time() - t, 'sec')
     
