@@ -35,8 +35,9 @@ bestCount = {}
 class_counts = {}
 debugging = False
 sift = cv2.xfeatures2d.SIFT_create()
+curr_class = ''
 def mycomparer(a, b, qc, qc2=None):
-    global sift
+    global saved_cmp, bestCount, debugging, sift, curr_class
     i2, i1 = a[0], b[0]
     im2, im1 = a[1], b[1]
     
@@ -90,6 +91,7 @@ def mycomparer(a, b, qc, qc2=None):
         img3 = cv2.drawMatchesKnn(im1,kp1,im2,kp2,matches,None,**draw_params)
         plt.imshow(img3)
         plt.savefig('sometest.jpg')
+        plt.close()
         
         print('i1:', i1, 'c1:', qc)
         print('i2:', i2, 'c2:', qc2)
@@ -102,12 +104,14 @@ def mycomparer(a, b, qc, qc2=None):
             bestCount[qc] = matchCount
         if matchCount > bestCount[qc]:
             bestCount[qc] = matchCount
-
-    # print('i1:', i1, 'c1:', qc)
-    # print('i2:', i2, 'c2:', qc2)
-    # print('matches:', matchCount)
-    # print('---------------OK---------------')
-
+    
+    if qc != curr_class:
+        print('i1:', i1, 'c1:', qc)
+        print('i2:', i2, 'c2:', qc2)
+        print('matches:', matchCount)
+        print('---------------OK---------------')
+        curr_class = qc
+    
     if qc in class_counts:
         if qc == qc2:
             class_counts[qc].append(matchCount)
@@ -116,9 +120,9 @@ def mycomparer(a, b, qc, qc2=None):
         if qc == qc2:
             class_counts[qc].append(matchCount)
     if i1 == '999.jpg' and i2 == '999.jpg':
-        fd = open('counts.txt', 'w')
-        for key in class_counts.keys():
-            fd.write(key + ' ' + str(sum(class_counts[key])/len(class_counts[key])))
+        with open('counts.txt', 'ab+') as fd:
+            for key in class_counts.keys():
+                fd.write(key + ' ' + str(sum(class_counts[key])/len(class_counts[key])))
     return matchCount > 37 # lol
     
     

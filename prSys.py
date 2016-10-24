@@ -124,6 +124,7 @@ class Manager(object):
         
         plt.savefig(f_join(self.sub, qc, 
             '{:03d}_pr.jpg'.format(i)))
+        plt.close(fig)
     
     
     def avgPR(self, fig=None, marker=None):
@@ -143,6 +144,8 @@ class Manager(object):
             plt.scatter(i, self.prs[qc].pavg, marker=marker)
         plt.xticks([i for i in range(10)], [c for c in self.qry_classes])
         plt.savefig(f_join(self.sub, 'avg_PR.jpg'))
+        return fig
+        # plt.close(fig)
         
     
     def fullPR(self, qc):
@@ -163,8 +166,9 @@ class Manager(object):
             plt.scatter(p, r, s=sz, color=c, alpha=0.5)
         
         plt.savefig(f_join(self.sub, qc, '_full_.jpg'))
+        plt.close(fig)
         
-    def alltests(self, qcs2plot=['c1', 'c5', 'c9'], N=100):
+    def alltests(self, qcs2plot=['c1', 'c5', 'c9'], N=100, fig=None):
         assert N > 0 and N < 101
         for qc in self.qry_classes:
             for i in range(0, N):
@@ -179,6 +183,6 @@ class Manager(object):
         
         # we also print out the avg pr for each class 
         # on the same plot to compare the classes
-        self.avgPR()
+        self.avgPR(fig)
         
         

@@ -59,15 +59,15 @@ if __name__ == '__main__':
     d = data.get()
     if args.module is None:
         for mod in (cibr, sift, fcibr):
-            mod.runtest(deepcopy(d))
+            mod.runtest(d)
     else:
         mod = args.module.lower()
         if mod in ('1', 'aecibr', 'cibr'):
-            cibr.runtest(deepcopy(d))
+            cibr.runtest(d)
         elif mod in ('2', 'filtered', 'filteredcibr', 'fcibr'):
-            fcibr.runtest(deepcopy(d))
+            fcibr.runtest(d)
         elif mod in ('3', 'sift', 'aesift'):
-            sift.runtest(deepcopy(d))
+            sift.runtest(d)
         else:
             print('Module {} does not exist.'.format(args.module))
             
