@@ -32,7 +32,7 @@ def mycomparer(a, b, qc, qc2):
     
 
 
-def runtest(d, cases):
+def runtest(d, cases, debug=False):
     print('\nfilteredCIBR test\n-----------')
     
     t = time.time()

@@ -35,11 +35,16 @@ if __name__ == '__main__':
         'm' : ('module', {
             'help' : 'choose a module to run',
         }),
+        'd' : ('debug', {
+            'default' : False,
+            'action' : 'store_true',
+            'help' : 'run in debug mode',
+        }),
         'r' : ('retrieve', {
             'default' : False,
             'action' : 'store_true',
             'help' : 'retrieve web resources',
-        }), 
+        }),
     }
     
     # configure
@@ -60,13 +65,13 @@ if __name__ == '__main__':
     # tests
     d = data.get()
     
-    cases = {qc : [randint(0, 100) for _ in range(3)] for qc in d}
+    cases = {qc : [randint(0, 99) for _ in range(3)] for qc in d}
     print('Random test cases chosen:')
     pprint(cases)
     
     if args.module is None:
         for mod in (cibr, fcibr, sift):
-            mod.runtest(d, cases)
+            mod.runtest(d, cases, debug=args.debug)
     else:
         mod = args.module.lower()
         if mod in ('1', 'aecibr', 'cibr'):

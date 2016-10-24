@@ -30,7 +30,7 @@ def mycomparer(a, b, qc, qc2):
     return cmp_img(t_hist, im2, norms, thresh)
     
     
-def runtest(d, cases):
+def runtest(d, cases, debug=False):
     print('\naeCIBR test\n-----------')
     t = time.time()
     manage = Manager(d, __name__, cmp=mycomparer)

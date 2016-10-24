@@ -180,9 +180,12 @@ class Manager(object):
                 assert len(pick3[i]) == len(pick3['c1'])
         
         for qc in self.qry_classes:
+            # get classes worth of descriptors
+            # qc_ds = 
             for i in range(0, N):
                 if i in pick3[qc]:
                     p = (qc in qcs2plot)
+                    # self.test(qc, i, plot=p, trainer=trainer)
                     self.test(qc, i, plot=p)
                 
         # after all tests are run create the full PR plots
@@ -194,5 +197,6 @@ class Manager(object):
         # we also print out the avg pr for each class 
         # on the same plot to compare the classes
         self.avgPR(fig)
+        
         
         
