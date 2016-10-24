@@ -19,6 +19,7 @@ class PR(object):
         self.best = None
         self.wrst = None
         self.pavg = []
+        self.ravg = []
         self.n = 0
 
     def feed(self, P, R, i):
@@ -36,7 +37,7 @@ class PR(object):
         # import sys
         # sys.stdin.readline()
         self.pavg.append(sum(P) / len(P))
-        self.save.append((P, R))
+        self.ravg.append(sum(R) / len(R))
         self.n += 1
     
 import sys
@@ -155,13 +156,15 @@ class Manager(object):
         plt.subplot(111)
         plt.xlabel('Precision')
         plt.ylabel('Recall')
+        plt.xlim(0, 1.5)
+        plt.ylim(0, 1.5)
         
-        dat = self.prs[qc].save
-        dl = len(dat)
-        zp, zr = zip(*(dat))
+        pavg = self.prs[qc].pavg
+        ravg = self.prs[qc].ravg
+        dl = len(pavg)
         
         for (p, r, sz, c) in zip(\
-            zp, zr, \
+            pavg, ravg, \
             np.linspace(10, 200, dl), \
             mpl.cm.rainbow(np.linspace(0, 1, dl))):
             plt.scatter(p, r, s=sz, color=c, alpha=0.5)
@@ -181,8 +184,7 @@ class Manager(object):
                 assert len(pick3[i]) == len(pick3['c1'])
         
         for qc in self.qry_classes:
-            # get classes worth of descriptors
-            # qc_ds = 
+            print('testing {}...'.format(qc))
             for i in range(0, N):
                 if i in pick3[qc]:
                     p = (qc in qcs2plot)

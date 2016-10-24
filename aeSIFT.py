@@ -33,7 +33,7 @@ assert 'xfeatures2d' in dir(cv2), 'opencv tools missing: xfeatures2d'
 debugging = False
 saved_descs = {}
 saved_flann = {}
-sift = cv2.xfeatures2d.SIFT_create()
+sift = cv2.xfeatures2d.SIFT_create(10)
 
 
 def mytrainer(qc, descs):
@@ -45,7 +45,7 @@ def mytrainer(qc, descs):
         {'checks':30})
     
     saved_flann[qc].add(descs)
-    # saved_flann[qc].train()
+    saved_flann[qc].train()
 
 
 def getfeatures(qc, img):
