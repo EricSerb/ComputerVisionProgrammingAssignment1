@@ -6,7 +6,9 @@ Driver for running the various segments of our project.
 Run 'python main.py -h' for info.
 '''
 import argparse as ap
-from copy import deepcopy
+# from copy import deepcopy
+from random import randint
+from pprint import pprint
 from data import \
     Dataset, res_dir
 import aeCIBR as cibr
@@ -57,17 +59,22 @@ if __name__ == '__main__':
     
     # tests
     d = data.get()
+    
+    cases = {qc : [randint(0, 100) for _ in range(3)] for qc in d}
+    print('Random test cases chosen:')
+    pprint(cases)
+    
     if args.module is None:
-        for mod in (cibr, sift, fcibr):
-            mod.runtest(d)
+        for mod in (cibr, fcibr, sift):
+            mod.runtest(d, cases)
     else:
         mod = args.module.lower()
         if mod in ('1', 'aecibr', 'cibr'):
-            cibr.runtest(d)
+            cibr.runtest(d, cases)
         elif mod in ('2', 'filtered', 'filteredcibr', 'fcibr'):
-            fcibr.runtest(d)
+            fcibr.runtest(d, cases)
         elif mod in ('3', 'sift', 'aesift'):
-            sift.runtest(d)
+            sift.runtest(d, cases)
         else:
             print('Module {} does not exist.'.format(args.module))
             

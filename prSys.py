@@ -168,12 +168,22 @@ class Manager(object):
         plt.savefig(f_join(self.sub, qc, '_full_.jpg'))
         plt.close(fig)
         
-    def alltests(self, qcs2plot=['c1', 'c5', 'c9'], N=100, fig=None):
+    def alltests(self, qcs2plot=['c1', 'c5', 'c9'], N=100, fig=None, pick3=[15, 18, 19]):
         assert N > 0 and N < 101
+        
+        if type(pick3) in (list, tuple):
+            pick3 = { qc : pick3 for qc in self.qry_classes }
+        else:
+            assert type(pick3) == dict
+            assert 'c1' in pick3
+            for i in pick3:
+                assert len(pick3[i]) == len(pick3['c1'])
+        
         for qc in self.qry_classes:
             for i in range(0, N):
-                p = (qc in qcs2plot)
-                self.test(qc, i, plot=p)
+                if i in pick3[qc]:
+                    p = (qc in qcs2plot)
+                    self.test(qc, i, plot=p)
                 
         # after all tests are run create the full PR plots
         # -- these use the PR results for every qry img,

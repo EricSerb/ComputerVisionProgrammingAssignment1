@@ -105,6 +105,19 @@ def mycomparer(a, b, qc, qc2=None):
         if matchCount > bestCount[qc]:
             bestCount[qc] = matchCount
     
+        if qc in class_counts:
+            if qc == qc2:
+                class_counts[qc].append(matchCount)
+        else:
+            class_counts[qc] = []
+            if qc == qc2:
+                class_counts[qc].append(matchCount)
+        if i1 == '999.jpg' and i2 == '999.jpg':
+            with open('counts.txt', 'ab+') as fd:
+                for key in class_counts.keys():
+                    fd.write(key + ' ' + str(sum(class_counts[key])/len(class_counts[key])))
+    #### END DEBUGGING SECTION ####
+        
     if qc != curr_class:
         print('i1:', i1, 'c1:', qc)
         print('i2:', i2, 'c2:', qc2)
@@ -112,27 +125,16 @@ def mycomparer(a, b, qc, qc2=None):
         print('---------------OK---------------')
         curr_class = qc
     
-    if qc in class_counts:
-        if qc == qc2:
-            class_counts[qc].append(matchCount)
-    else:
-        class_counts[qc] = []
-        if qc == qc2:
-            class_counts[qc].append(matchCount)
-    if i1 == '999.jpg' and i2 == '999.jpg':
-        with open('counts.txt', 'ab+') as fd:
-            for key in class_counts.keys():
-                fd.write(key + ' ' + str(sum(class_counts[key])/len(class_counts[key])))
     return matchCount > 37 # lol
     
     
-def runtest(d):
+def runtest(d, cases):
     print('\naeSIFT test\n-----------')
     
     t = time.time()
     
     manage = Manager(d, __name__, cmp=mycomparer)
-    manage.alltests(N=100)
+    manage.alltests(N=100, pick3=cases)
     # manage.alltests(qcs2plot=['c5'], N=100)
     
     print(time.time() - t, 'sec')

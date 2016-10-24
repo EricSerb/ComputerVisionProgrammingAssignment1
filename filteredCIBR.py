@@ -32,13 +32,13 @@ def mycomparer(a, b, qc, qc2):
     
 
 
-def runtest(d):
+def runtest(d, cases):
     print('\nfilteredCIBR test\n-----------')
     
     t = time.time()
     
     manage = Manager(d, __name__, cmp=mycomparer)
-    manage.alltests()
+    manage.alltests(pick3=cases)
     
     print(time.time() - t, 'sec')
     
