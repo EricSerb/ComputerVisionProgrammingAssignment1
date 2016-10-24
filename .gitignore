@@ -1,12 +1,10 @@
 *.pyc
 res
 res/*
-testres.jpg
-myresult.jpg
+*.jpg
 .idea
 .idea/*
 prSys
 prSys/*
 prtest
 prtest/*
-sometest.png
