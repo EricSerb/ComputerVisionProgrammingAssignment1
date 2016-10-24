@@ -29,40 +29,28 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 
+
 saved_cmp = {}
-def mycomparer(a, b, qc):
-    
-    i2, i1 = a[0], b[0]
-    im2, im1 = a[1], b[1]
-    
-    t_hist = thresh = norms = None
-    if qc in saved_cmp:
-        if i1 in saved_cmp[qc]:
-            t_hist, thresh, norms = saved_cmp[qc][i1]
-            
-    if t_hist is None:
-        t_hist = color_histo(im1)
-        thresh = color_thresh(t_hist)
-        norms = tuple(cv2.compareHist(t, t, cv2.HISTCMP_INTERSECT) \
-            for t in t_hist)
-        saved_cmp.setdefault(qc, {})[i1] = t_hist, thresh, norms
-        
-    return cmp_img(t_hist, im2, norms, thresh)
-    
-    
 bestCount = {}
-def mycomparer2(a, b, qc, qc2=None):
+debugging = False
+def mycomparer(a, b, qc, qc2=None):
     
     i2, i1 = a[0], b[0]
     im2, im1 = a[1], b[1]
-    
     
     # check cv2.__version__ == 3.1.0-dev
     assert 'xfeatures2d' in dir(cv2), 'required opencv tools ' \
         'missing: xfeatures2d'
-        
-    sift = cv2.xfeatures2d.SIFT_create()
-    kp1, ds1 = sift.detectAndCompute(im1, None)
+    
+    # cache check
+    sift = kp1 = ds1 = None
+    if qc in saved_cmp:
+        if i1 in saved_cmp[qc]:
+            sift, kp1, ds1 = saved_cmp[qc][i1]
+    if sift is None:
+        sift = cv2.xfeatures2d.SIFT_create()
+        kp1, ds1 = sift.detectAndCompute(im1, None)
+    
     kp2, ds2 = sift.detectAndCompute(im2, None)
     
     flann = cv2.FlannBasedMatcher({'algorithm' : 0, 'trees' : 5},{'checks':50})
@@ -79,7 +67,7 @@ def mycomparer2(a, b, qc, qc2=None):
             matchesMask[i] = [1,0]
     
     # test drawing for debugging
-    if True:
+    if debugging:
         draw_params = dict(
             matchColor = (0,255,0),
             singlePointColor = (255,0,0),
@@ -89,20 +77,21 @@ def mycomparer2(a, b, qc, qc2=None):
         img3 = cv2.drawMatchesKnn(im1,kp1,im2,kp2,matches,None,**draw_params)
         plt.imshow(img3)
         plt.savefig('sometest.png')
+        
+        print('i1:', i1, 'c1:', qc)
+        print('i2:', i2, 'c2:', qc2)
+        print('matches:', matchCount)
+        print('---------------OK---------------')
     
-    # print(bestCount)
-    # bestCount.setdefault(qc, matchCount)
-    if qc not in bestCount:
-        bestCount[qc] = matchCount
-    if matchCount > bestCount[qc]:
-        bestCount[qc] = matchCount
+        # print(bestCount)
+        # bestCount.setdefault(qc, matchCount)
+        if qc not in bestCount:
+            bestCount[qc] = matchCount
+        if matchCount > bestCount[qc]:
+            bestCount[qc] = matchCount
     
-    print('i1:', i1, 'c1:', qc)
-    print('i2:', i2, 'c2:', qc2)
-    print('matches:', matchCount)
-    print('---------------OK---------------')
     
-    return matchCount > 4 # lol
+    return matchCount > 3 # lol
     
     
 def runtest(d):
@@ -110,7 +99,8 @@ def runtest(d):
     
     t = time.time()
     
-    manage = Manager(d, __name__, cmp=mycomparer2)
-    manage.alltests(qcs2plot=['c5'], N=2)
+    manage = Manager(d, __name__, cmp=mycomparer)
+    manage.alltests(N=100)
+    # manage.alltests(qcs2plot=['c5'], N=100)
     
     print(time.time() - t, 'sec')
