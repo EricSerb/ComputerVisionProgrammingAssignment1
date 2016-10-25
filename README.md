@@ -6,7 +6,7 @@
 # Dependencies
 
 - python 2/3
-- opencv 3.1.0-dev
+- opencv 3.1.0-dev (This is required for aeSIFT to work)
 - requests
 - ~~numpy~~
 - ~~scipy~~
