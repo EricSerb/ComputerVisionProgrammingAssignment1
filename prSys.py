@@ -9,16 +9,16 @@ import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-from data import f_exists, f_join, f_mkdir, res_dir
+from data import f_exists, f_join, f_mkdir
 
 
 class PR(object):
     
     def __init__(self):
-        self.save = []
         self.best = None
         self.wrst = None
         self.pavg = []
+        self.ravg = []
         self.n = 0
 
     def feed(self, P, R, i):
@@ -29,17 +29,12 @@ class PR(object):
                 self.best = (P[-1], R[-1], i)
             if (P[-1]*R[-1]) < (self.wrst[0] * self.wrst[1]):
                 self.wrst = (P[-1], R[-1], i)
-
-        # print(P)
-        # print(sum(P[e-1]/e for e in range(1, len(P) + 1)))
-        # print(len(P))
-        # import sys
-        # sys.stdin.readline()
-        self.pavg.append(sum(P) / len(P))
-        self.save.append((P, R))
+                
+        self.pavg.append(sum(P) / float(len(P)))
+        self.ravg.append(sum(R) / float(len(R)))
         self.n += 1
     
-import sys
+    
 class Manager(object):
     '''
     Manages pr calculations and maintains state for 
@@ -50,8 +45,8 @@ class Manager(object):
         # get list of classes, and save other args
         self.data = data
         self.qry_classes = ['c{}'.format(i) \
-            for i in sorted(int(c[1:]) for c in data)]
-        self.sub = f_join(res_dir, sub_f)
+            for i in sorted(int(c[1:]) for c in self.data.imgs)]
+        self.sub = f_join(data.dest, sub_f)
         self.imgcmp = cmp
         
         # double check directories are set up
@@ -71,15 +66,15 @@ class Manager(object):
         Using the i'th img as the qry image, 
         run a PR test on class qc.
         '''
-        assert qc in self.data
-        assert i < len(self.data[qc])
+        assert qc in self.data.imgs
+        assert i < len(self.data.imgs[qc])
         
-        qi = self.data[qc][i]
+        qi = self.data.imgs[qc][i]
         
-        res = {c : [self.imgcmp(o, qi, qc, c) for o in self.data[c]] \
+        res = {c : [self.imgcmp(o, qi, qc, c) for o in self.data.imgs[c]] \
             for c in self.qry_classes}
         
-        P, R= zip(*[self.calcPR(res, qc, n)
+        P, R = zip(*[self.calcPR(res, qc, n)
             for n in range(1, len(res[qc]) + 1)])
         
         # feed the running pr totals with the last PR
@@ -89,21 +84,28 @@ class Manager(object):
             self.plotPR(qc, i, P, R)
     
     
-    def calcPR(self, res, qc, n):
-        n_crrct = float(res[qc][:n].count(True))
-        n_mtchd = sum(res[j][:n].count(True) for j in res)
+    def calcPR(self, res, qc, k):
+        '''
+        Internal method for extracting P,R values. 
+        res = container storing results by class and img within.
+        qc = class of which to calc from.
+        k = number of imgs from each class to retrieve.
+        '''
+        n_crrct = float(res[qc][:k].count(True))
+        n_mtchd = float(sum(res[j][:k].count(True) for j in res))
         try:
             p = n_crrct / n_mtchd
         except ZeroDivisionError:
             p = 0.0
             pass
-        r = n_crrct / n
+        r = n_crrct / k
         return p, r
     
     
     def plotPR(self, qc, i, P, R):
         '''
-        Handles making PR plot with mpl.
+        Handles making simple PR plot with mpl.
+        Data came from test results using qry image at data.imgs[qc][i].
         '''
         assert type(P) == type(R)
         assert type(P) in (list, tuple)
@@ -111,7 +113,6 @@ class Manager(object):
         
         fig = plt.figure()
         plt.suptitle('PR')
-        plt.subplot(111)
         plt.xlabel('Precision')
         plt.ylabel('Recall')
         
@@ -128,66 +129,69 @@ class Manager(object):
         plt.close(fig)
     
     
-    def avgPR(self, fig=None, marker=None):
+    def avgPR(self):
         '''
         After running, this function will generate PR plots
         for averages maintained by the PR objects.
         '''
-        if fig is None:
-            fig = plt.figure()
-        if marker is None:
-            marker = 'o'
+        fig = plt.figure()
         plt.suptitle('avg_PR')
-        plt.subplot(111)
+        plt.title('prec = o, rec = x')
         plt.xlabel('Category')
-        plt.ylabel('Avg precision')
-        for i, qc in enumerate(self.qry_classes):
-            plt.scatter(i, sum(self.prs[qc].pavg) / len(self.prs[qc].pavg), marker=marker)
         plt.xticks([i for i in range(10)], [c for c in self.qry_classes])
+        plt.ylabel('Avg precision')
+        plt.ylim(0.0, 1.1)
+        
+        for i, qc in enumerate(self.qry_classes):
+            plt.scatter(i, sum(self.prs[qc].pavg) / len(self.prs[qc].pavg), 
+                s=10, color='g', marker='o', alpha=0.6)
+            plt.scatter(i, sum(self.prs[qc].ravg) / len(self.prs[qc].ravg), 
+                s=20, color='b', marker='x', alpha=0.8)
+        
         plt.savefig(f_join(self.sub, 'avg_PR.jpg'))
-        return fig
-        # plt.close(fig)
+        plt.close(fig)
         
     
     def fullPR(self, qc):
+        '''
+        Plots all the weighted averaged precisions from all tests run 
+        on each class.
+        '''
         fig = plt.figure()
         plt.suptitle('full_PR')
-        plt.subplot(111)
         plt.xlabel('Precision')
+        plt.xlim(0.0, 1.1)
         plt.ylabel('Recall')
+        plt.ylim(0.0, 1.1)
         
-        dat = self.prs[qc].save
-        dl = len(dat)
-        zp, zr = zip(*(dat))
+        pavg = self.prs[qc].pavg
+        ravg = self.prs[qc].ravg
+        dl = len(pavg)
         
         for (p, r, sz, c) in zip(\
-            zp, zr, \
-            np.linspace(10, 200, dl), \
+            pavg, ravg, np.linspace(10, 200, dl), \
             mpl.cm.rainbow(np.linspace(0, 1, dl))):
+            
             plt.scatter(p, r, s=sz, color=c, alpha=0.5)
         
         plt.savefig(f_join(self.sub, qc, '_full_.jpg'))
         plt.close(fig)
         
-    def alltests(self, qcs2plot=['c1', 'c5', 'c9'], N=100, fig=None, pick3=[15, 18, 19]):
-        assert N > 0 and N < 101
         
-        if type(pick3) in (list, tuple):
-            pick3 = { qc : pick3 for qc in self.qry_classes }
-        else:
-            assert type(pick3) == dict
-            assert 'c1' in pick3
-            for i in pick3:
-                assert len(pick3[i]) == len(pick3['c1'])
+    def alltests(self, K, plots=['c1', 'c5', 'c9']):
+        '''
+        Executes all tests in an ordered fashion.
+        '''
+        assert isinstance(K, int)
+        assert K > 0 and K < self.data.catsz + 1, \
+            'Invalid K value. Must be in [0..{}]'.format(self.data.catsz)
+        
         
         for qc in self.qry_classes:
-            # get classes worth of descriptors
-            # qc_ds = 
-            for i in range(0, N):
-                if i in pick3[qc]:
-                    p = (qc in qcs2plot)
-                    # self.test(qc, i, plot=p, trainer=trainer)
-                    self.test(qc, i, plot=p)
+            print(' testing {}...'.format(qc))
+            for i in self.data.testcases[qc]:
+                p = (qc in plots)
+                self.test(qc, i, plot=p)
                 
         # after all tests are run create the full PR plots
         # -- these use the PR results for every qry img,
@@ -197,7 +201,7 @@ class Manager(object):
         
         # we also print out the avg pr for each class 
         # on the same plot to compare the classes
-        self.avgPR(fig)
+        self.avgPR()
         
         
         

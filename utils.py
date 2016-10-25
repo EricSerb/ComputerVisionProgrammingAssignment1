@@ -8,6 +8,7 @@ code cleaner and more readable, and mainly shorter :p
 import cv2
 import numpy as np
 from operator import itemgetter
+from collections import Iterable
 
 
 class Otsu(object):
@@ -74,4 +75,14 @@ def bilateral_filter(img):
 def gaussian_filter(img):
     return cv2.GaussianBlur(img, (3,3), 1)
 
-    
+
+def flatten(container):
+    if isinstance(container, Iterable):
+        for e in container:
+            if isinstance(e, Iterable) and not isinstance(e, basestring):
+                for sub in flatten(e):
+                    yield sub
+            else:
+                yield e
+    else:
+        yield container

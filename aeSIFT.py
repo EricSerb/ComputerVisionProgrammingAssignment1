@@ -25,39 +25,62 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-
 # check cv2.__version__ == 3.1.0-dev
 assert 'xfeatures2d' in dir(cv2), 'opencv tools missing: xfeatures2d'
 
-
+hdr = '\naeSIFT test\n-----------'
+ready = False
 debugging = False
+sift = None
 saved_descs = {}
 saved_flann = {}
-sift = cv2.xfeatures2d.SIFT_create()
 
+
+def init(data):
+    global ready, debugging, sift
+    sift = cv2.xfeatures2d.SIFT_create(10)
+    
+    print('Calculating descriptors...')
+    for qc in data.imgs:
+        for i in data.imgs[qc]:
+            getfeatures(qc, i)
+    
+    print('Training matchers...')
+    for qc in data.imgs:
+        mytrainer(qc, [saved_descs[qc][i[0]] for i in data.imgs[qc]])
+    
+    ready = True
+    
 
 def mytrainer(qc, descs):
     global saved_flann
-    print('Training {} with {} descriptors'.format(qc, len(descs)))
+    print('Training {} with {} descriptor sets'.format(qc, len(descs)))
     
     saved_flann[qc] = cv2.FlannBasedMatcher(
         {'algorithm' : 1, 'trees' : 5},
         {'checks':30})
     
     saved_flann[qc].add(descs)
-    # saved_flann[qc].train()
+    saved_flann[qc].train()
 
 
 def getfeatures(qc, img):
     global saved_descs, sift
+    
     if qc not in saved_descs:
         saved_descs[qc] = {}
-    kp, ds = sift.detectAndCompute(cv2.cvtColor(img[1], cv2.COLOR_BGR2HSV), None)
+    
+    kp, ds = sift.detectAndCompute(
+        cv2.cvtColor(img[1], cv2.COLOR_BGR2HSV), None)
+    
     saved_descs[qc][img[0]] = ds
 
 
-def mycomparer(a, b, qc, qc2=None):
-    global debugging, sift, saved_flann, saved_descs
+def matcher(a, b, qc, qc2):
+    global ready, debugging, sift, saved_flann, saved_descs
+    
+    assert ready, 'Please call init with dataset ' \
+        'before using aeSIFT img matcher'
     
     i2, i1 = a[0], b[0]
     im2, im1 = a[1], b[1]
@@ -83,34 +106,3 @@ def mycomparer(a, b, qc, qc2=None):
             bestCount, bestClass = matchCount, c
     
     return bestClass == qc2
-
-
-def runtest(d, cases, debug=False):
-    global debugging
-    debugging = debug
-    print('\naeSIFT test\n-----------')
-    t = time.time()
-    
-    print('Calculating descriptors...')
-    for qc in d:
-        for i in d[qc]:
-            getfeatures(qc, i)
-    
-    print('Training matchers...')
-    for qc in d:
-        mytrainer(qc, [saved_descs[qc][i[0]] for i in d[qc]])
-    
-    manage = Manager(d, __name__, cmp=mycomparer)
-    manage.alltests(N=100, pick3=cases)
-    
-    with open('.'.join((__name__, 'txt')), 'wb+') as fd:
-        fd.write('start_________________')
-        fd.write(__name__ + '\n')
-        for qc in d:
-            p1 = 'best = ' + qc + ' : ' + d[qc][manage.prs[qc].best[-1]][0] + '\n'
-            p2 = 'worst = ' + qc + ' : ' + d[qc][manage.prs[qc].wrst[-1]][0] + '\n'
-            fd.write(p1)
-            fd.write(p2)
-        fd.write('end_________________')
-    
-    print(time.time() - t, 'sec')
