@@ -29,7 +29,6 @@ class PR(object):
                 self.best = (P[-1], R[-1], i)
             if (P[-1]*R[-1]) < (self.wrst[0] * self.wrst[1]):
                 self.wrst = (P[-1], R[-1], i)
-                
         self.pavg.append(sum(P) / float(len(P)))
         self.ravg.append(sum(R) / float(len(R)))
         self.n += 1
@@ -160,9 +159,9 @@ class Manager(object):
         fig = plt.figure()
         plt.suptitle('full_PR')
         plt.xlabel('Precision')
-        plt.xlim(0.0, 1.1)
+        plt.xlim(0, 1.5)
         plt.ylabel('Recall')
-        plt.ylim(0.0, 1.1)
+        plt.ylim(0, 1.5)
         
         pavg = self.prs[qc].pavg
         ravg = self.prs[qc].ravg
@@ -185,7 +184,6 @@ class Manager(object):
         assert isinstance(K, int)
         assert K > 0 and K < self.data.catsz + 1, \
             'Invalid K value. Must be in [0..{}]'.format(self.data.catsz)
-        
         
         for qc in self.qry_classes:
             print(' testing {}...'.format(qc))
