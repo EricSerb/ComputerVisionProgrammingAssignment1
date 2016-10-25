@@ -8,7 +8,7 @@ code cleaner and more readable, and mainly shorter :p
 import sys
 import zipfile
 from pprint import pprint
-from random import randint
+from random import sample
 from getpass import getpass
 from requests import get as wget
 from requests.exceptions import RequestException
@@ -88,7 +88,7 @@ class Dataset(object):
         n = 0 if n < 0 else n
         n = self.catsz if n > self.catsz else n
         self.testcases = self.testcases or \
-            {qc : [randint(0, self.catsz-1) for _ in range(n)] for qc in self.imgs}
+            {qc : sample(range(0, self.catsz), n) for qc in self.imgs}
         pprint('Test cases:')
         pprint(self.testcases)
     
