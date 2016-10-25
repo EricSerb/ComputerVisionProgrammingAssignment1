@@ -18,14 +18,15 @@ import filteredCIBR as fcibr
 def runtest(dset, mod, dbg):
     
     t = time()
+    handle = mod.handler(dset)
     
-    if 'init' in dir(mod):
-        print('Initializing module: {}'.format(mod.__name__))
-        mod.init(dset)
+    # if 'init' in dir(mod):
+        # print('Initializing module: {}'.format(mod.__name__))
+        # mod.init(dset)
     
     print(str(mod.hdr))
-    manage = Manager(dset, mod.__name__, cmp=mod.matcher)
-    manage.alltests(dset.catsz)
+    manage = Manager(dset, mod.__name__, cmp=handle)
+    manage.alltests(dset.catsz) # K
     
     with open('.'.join((mod.__name__, 'txt')), 'wb+') as fd:
         fd.write(str(mod.hdr) + '\n')

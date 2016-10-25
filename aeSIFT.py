@@ -26,83 +26,105 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 # check cv2.__version__ == 3.1.0-dev
-assert 'xfeatures2d' in dir(cv2), 'opencv tools missing: xfeatures2d'
+assert 'xfeatures2d' in dir(cv2), 'opencv tools missing: xfeatures2d (v3.0.1-dev)'
 
 hdr = '\naeSIFT test\n-----------'
-ready = False
-debugging = False
-sift = None
-saved_descs = {}
-saved_flann = {}
 
 
-def init(data):
-    global ready, debugging, sift
-    sift = cv2.xfeatures2d.SIFT_create(10)
-    
-    print('Calculating descriptors...')
-    for qc in data.imgs:
-        for i in data.imgs[qc]:
-            getfeatures(qc, i)
-    
-    print('Training matchers...')
-    for qc in data.imgs:
-        mytrainer(qc, [saved_descs[qc][i[0]] for i in data.imgs[qc]])
-    
-    ready = True
-    
-
-def mytrainer(qc, descs):
-    global saved_flann
-    print('Training {} with {} descriptor sets'.format(qc, len(descs)))
-    
-    saved_flann[qc] = cv2.FlannBasedMatcher(
-        {'algorithm' : 1, 'trees' : 5},
-        {'checks':30})
-    
-    saved_flann[qc].add(descs)
-    saved_flann[qc].train()
-
-
-def getfeatures(qc, img):
-    global saved_descs, sift
-    
-    if qc not in saved_descs:
-        saved_descs[qc] = {}
-    
-    kp, ds = sift.detectAndCompute(
-        cv2.cvtColor(img[1], cv2.COLOR_BGR2HSV), None)
-    
-    saved_descs[qc][img[0]] = ds
-
-
-def matcher(a, b, qc, qc2):
-    global ready, debugging, sift, saved_flann, saved_descs
-    
-    assert ready, 'Please call init with dataset ' \
-        'before using aeSIFT img matcher'
-    
-    i2, i1 = a[0], b[0]
-    im2, im1 = a[1], b[1]
-    
-    ds1 = saved_descs[qc][i1]
-    
-    bestCount = 0
-    bestClass = None
-    
-    for c in saved_flann:
+class handler(object):
+    '''
+    Manages state for the sift system.
+    At init we get/store descriptors and
+    train a few look up tables (cv2.flann...).
+    They are essentially KD trees that provide
+    fast approximate nearest neighbor searching.
+    '''
+    def __init__(self, data):
+        '''
+        Begin computation of descriptors and match trees.
+        Uses 
+        '''
+        self.ready = False
+        self.debugging = False
+        self.descs = {}
+        self.flann = {}
+        self.sift = cv2.xfeatures2d.SIFT_create(10)
         
-        # get matches for this flann matcher
-        matches = saved_flann[c].knnMatch(ds1, k=2)
-    
-        # ratio test as per Lowe's paper
-        matchCount = 0
-        for i,(m,n) in enumerate(matches):
-            if m.distance < 0.8 * n.distance:
-                matchCount += 1
+        print('Calculating descriptors...')
+        for icat in data.imgs:
+            for i in data.imgs[icat]:
+                self._getfeatures(icat, i)
         
-        # keep track of best
-        if matchCount > bestCount:
-            bestCount, bestClass = matchCount, c
-    
-    return bestClass == qc2
+        print('Training matchers...')
+        for icat in data.imgs:
+            self._train(icat, [self.descs[icat][i[0]] for i in data.imgs[icat]])
+        
+        self.data = data
+
+    def _train(self, icat, descs):
+        '''
+        Loads the flann kd trees for specific category with descriptors.
+        '''
+        print('Training {} with {} descriptor sets'.format(icat, len(descs)))
+        
+        self.flann[icat] = cv2.FlannBasedMatcher(
+            {'algorithm' : 1, 'trees' : 5},
+            {'checks':30})
+        
+        self.flann[icat].add(descs)
+        self.flann[icat].train()
+
+
+    def _getfeatures(self, icat, img):
+        '''
+        Grabs a an image tuple from category icat.
+        Uses cv2 SIFT to extract features from the images.
+        Saves them in self.descs, a hash structure:
+        
+            { 'category' : {
+                'img.jpg' : descriptors,
+                },
+            }
+        '''
+        if icat not in self.descs:
+            self.descs[icat] = {}
+        
+        kp, ds = self.sift.detectAndCompute(
+            cv2.cvtColor(img[1], cv2.COLOR_BGR2HSV), None)
+        
+        self.descs[icat][img[0]] = ds
+
+
+    def __call__(self, a, b, icat, icat2):
+        '''
+        Uses each trained flann tree to compare the query image
+        with. Each match set returned is filtered by a ratio test
+        between two distances. We tuned this to 0.8 here.
+        
+            (m,n for m,n in matches if m.distance < 0.8 * n.distance)
+        
+        '''
+        i2, i1 = a[0], b[0]
+        im2, im1 = a[1], b[1]
+        
+        ds1 = self.descs[icat][i1]
+        
+        bestCount = 0
+        bestClass = None
+        
+        for c in self.flann:
+            
+            # get matches for this flann matcher
+            matches = self.flann[c].knnMatch(ds1, k=2)
+        
+            # ratio test (Lowe)
+            matchCount = 0
+            for i,(m,n) in enumerate(matches):
+                if m.distance < 0.8 * n.distance:
+                    matchCount += 1
+            
+            # keep track of best
+            if matchCount > bestCount:
+                bestCount, bestClass = matchCount, c
+        
+        return bestClass == icat2
