@@ -5,8 +5,8 @@
 
 # Dependencies
 
-- python 3
-- opencv
+- python 2/3
+- opencv 3.1.0-dev
 - requests
 - ~~numpy~~
 - ~~scipy~~
@@ -18,10 +18,10 @@
 
 - [x] skeleton
 - [x] cli
-- [ ] asSIFT
-- [ ] aeCIBR
-- [ ] filteredCIBR
-- [ ] plots
-- [ ] more plots
-- [ ] .
+- [x] asSIFT
+- [x] aeCIBR
+- [x] filteredCIBR
+- [x] plots
+- [ ] Precision Comparison plot
+- [ ] Rank Plots
 
