@@ -121,7 +121,6 @@ class Manager(object):
         assert len(P) == len(R)
         
         fig = plt.figure()
-        plt.suptitle('PR')
         plt.xlabel('Precision')
         plt.ylabel('Recall')
         
@@ -144,7 +143,6 @@ class Manager(object):
         on each class.
         '''
         fig = plt.figure()
-        plt.suptitle('full_PR')
         plt.xlabel('Precision')
         plt.xlim(0, 1.5)
         plt.ylabel('Recall')
@@ -170,8 +168,6 @@ class Manager(object):
         for averages maintained by the PR objects.
         '''
         fig = plt.figure(pfig.number) if pfig else plt.figure()
-        plt.suptitle('avg_PR')
-        plt.title('prec = o, rec = x')
         plt.xlabel('Category')
         plt.xticks([i for i in range(len(self.data.catlist))], \
             [c for c in self.data.catlist])
@@ -181,7 +177,7 @@ class Manager(object):
         
         for i, cat in enumerate(self.data.catlist):
             plt.scatter(i, sum(self.prs[cat].pavg) / len(self.prs[cat].pavg), 
-                s=25, color=self.mod.color, marker=self.mod.marker, alpha=0.6)
+            s=self.mod.marksz, color=self.mod.color, marker=self.mod.marker, alpha=0.6)
                 
             if recall:
                 plt.scatter(i, sum(self.prs[cat].ravg) / len(self.prs[cat].ravg), 

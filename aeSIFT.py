@@ -26,6 +26,7 @@ assert 'xfeatures2d' in dir(cv2), 'opencv tools missing: xfeatures2d (v3.0.1-dev
 
 marker = '*'
 color = 'b'
+marksz = 25
 hdr = '\naeSIFT test\n-----------'
 
 
@@ -86,8 +87,7 @@ class handler(object):
         Saves them in self.descs, a hash by img id.
         '''
         dat = self.data.get(img)
-        kp, ds = self.sift.detectAndCompute(
-            cv2.cvtColor(dat, cv2.COLOR_BGR2HSV), None)
+        kp, ds = self.sift.detectAndCompute(dat, None)
         self.descs[img] = ds
         
         
@@ -116,7 +116,7 @@ class handler(object):
             # ratio test (Lowe)
             cnt = 0
             for i,(m,n) in enumerate(matches):
-                if m.distance < 0.5 * n.distance:
+                if m.distance < 0.7 * n.distance:
                     cnt += 1
             
             # keep track of best
