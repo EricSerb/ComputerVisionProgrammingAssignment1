@@ -18,6 +18,7 @@ If another version is used, this module likely will not work. Sry :(
 
 '''
 from collections import namedtuple as nt
+from random import sample
 from utils import color_histo, color_thresh
 from prSys import Manager
 import cv2
@@ -45,6 +46,7 @@ class handler(object):
         Begin computation of descriptors and match trees.
         Uses 
         '''
+        self.data = data
         self.descs = {}
         self.flann = {}
         assert isinstance(feats, int)
@@ -55,10 +57,11 @@ class handler(object):
             self._getfeatures(img)
         
         print('Training matchers...')
+        tot = int(data.catsz / 3)
         for c in data.catlist:
-            self._train(c, [self.descs[img.id] for img in data.cats[c]])
+            randimgs = sample(range(0, data.catsz), tot)
+            self._train(c, [self.descs[data.cats[c][ri].id] for ri in randimgs])
         
-        self.data = data
         
         
     def _train(self, cat, descs):
@@ -82,9 +85,10 @@ class handler(object):
         Uses cv2 SIFT to extract features from the images.
         Saves them in self.descs, a hash by img id.
         '''
+        dat = self.data.get(img)
         kp, ds = self.sift.detectAndCompute(
-            cv2.cvtColor(img[1], cv2.COLOR_BGR2HSV), None)
-        self.descs[img.id] = ds
+            cv2.cvtColor(dat, cv2.COLOR_BGR2HSV), None)
+        self.descs[img] = ds
         
         
     def __call__(self, oth, qry):
@@ -96,6 +100,9 @@ class handler(object):
             (m,n for m,n in matches if m.distance < 0.8 * n.distance)
         
         '''
+        oth = oth[0]
+        qry = qry[0]
+        
         ds1 = self.descs[oth.id]
         
         Best = nt('Best', 'cnt cat') # nample tuple
