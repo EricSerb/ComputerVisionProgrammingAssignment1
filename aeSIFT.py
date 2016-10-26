@@ -54,9 +54,9 @@ class handler(object):
             self._getfeatures(img)
         
         print('Training matchers...')
-        tot = int(data.catsz)
         for c in data.catlist:
-            randimgs = sample(range(0, data.catsz), tot)
+            frac = 1 # set this parameter to fraction of imgs to train with
+            randimgs = sample(range(0, data.catsz), int(data.catsz * frac))
             self._train(c, [self.descs[data.cats[c][ri].id] for ri in randimgs])
         
         

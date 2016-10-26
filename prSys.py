@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 from data import f_exists, f_join, f_mkdir
 from operator import attrgetter
 
-# __debug__ = False
 
 class PR(object):
     
@@ -91,7 +90,7 @@ class Manager(object):
         ranks = self.calcRanks(qry[0])
         mRanks = filter(lambda r: res[r[1].img.cat][self.data.idx(r[1].img.id)], ranks)
         self.ranks.setdefault(qry[0].cat, []).append(
-            sum(m[0] for m in mRanks) / len(mRanks))
+            sum(m[0] for m in mRanks) / len(mRanks) if mRanks else 0.0)
         
     
     def calcPR(self, res, cat, k):
@@ -182,7 +181,7 @@ class Manager(object):
         
         for i, cat in enumerate(self.data.catlist):
             plt.scatter(i, sum(self.prs[cat].pavg) / len(self.prs[cat].pavg), 
-                s=10, color=self.mod.color, marker=self.mod.marker, alpha=0.6)
+                s=25, color=self.mod.color, marker=self.mod.marker, alpha=0.6)
                 
             if recall:
                 plt.scatter(i, sum(self.prs[cat].ravg) / len(self.prs[cat].ravg), 
