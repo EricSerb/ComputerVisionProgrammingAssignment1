@@ -139,9 +139,10 @@ class Dataset(object):
         assert id in self._dat, 'Dataset.get: bad id'
         return self._dat[id]
     
-    # def get(self, cat, i):
-        # assert id in self._dat, 'Dataset.get: bad id'
-        # return self.imgs[self.cats[cat][i].id]
+    
+    def idx(self, id):
+        return int(f_splitext(id)[0]) % self.catsz
+    
     
     def __iter__(self):
         '''

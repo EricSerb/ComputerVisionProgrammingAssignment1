@@ -17,19 +17,15 @@ We used python 2.7.12, with opencv versin 3.1.0-dev
 If another version is used, this module likely will not work. Sry :(
 
 '''
-from collections import namedtuple as nt
 from random import sample
-from utils import color_histo, color_thresh
-from prSys import Manager
+from utils import Best, Rank
 import cv2
-import time
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
 
 # check cv2.__version__ == 3.1.0-dev
 assert 'xfeatures2d' in dir(cv2), 'opencv tools missing: xfeatures2d (v3.0.1-dev)'
 
+marker = '*'
+color = 'b'
 hdr = '\naeSIFT test\n-----------'
 
 
@@ -41,12 +37,13 @@ class handler(object):
     They are essentially KD trees that provide
     fast approximate nearest neighbor searching.
     '''
-    def __init__(self, data, feats=10):
+    def __init__(self, data, feats=5):
         '''
         Begin computation of descriptors and match trees.
         Uses 
         '''
         self.data = data
+        self.ranks = {}
         self.descs = {}
         self.flann = {}
         assert isinstance(feats, int)
@@ -57,13 +54,16 @@ class handler(object):
             self._getfeatures(img)
         
         print('Training matchers...')
-        tot = int(data.catsz / 3)
+        tot = int(data.catsz)
         for c in data.catlist:
             randimgs = sample(range(0, data.catsz), tot)
             self._train(c, [self.descs[data.cats[c][ri].id] for ri in randimgs])
         
         
-        
+    def _rank(self, qry, oth, r):
+        self.ranks.setdefault(qry.id, []).append(Rank(oth, r))
+    
+    
     def _train(self, cat, descs):
         '''
         Loads the flann kd trees for specific category with descriptors.
@@ -103,11 +103,11 @@ class handler(object):
         oth = oth[0]
         qry = qry[0]
         
-        ds1 = self.descs[oth.id]
+        ds1 = self.descs[qry.id]
         
-        Best = nt('Best', 'cnt cat') # nample tuple
+        rank = None
+        
         best = Best(0, None)
-        
         for c in self.flann:
             
             # get matches for this flann matcher
@@ -116,12 +116,18 @@ class handler(object):
             # ratio test (Lowe)
             cnt = 0
             for i,(m,n) in enumerate(matches):
-                if m.distance < 0.8 * n.distance:
+                if m.distance < 0.5 * n.distance:
                     cnt += 1
             
             # keep track of best
             if cnt > best.cnt:
                 del best
                 best = Best(cnt, c)
+            
+            # also remember result from flann associated with oth
+            if c == oth.cat:
+                rank = cnt
         
-        return best.cat == qry.cat
+        self._rank(qry, oth, rank)
+        
+        return best.cat == oth.cat

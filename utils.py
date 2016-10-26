@@ -12,6 +12,9 @@ from collections import Iterable, namedtuple as nt
 
 
 
+Best = nt('Best', 'cnt cat') # nample tuple
+Rank = nt('Rank', 'img val') # nample tuple
+
 class imgobj(object):
     def __init__(self, id, cat):
         self.id, self.cat = id, cat

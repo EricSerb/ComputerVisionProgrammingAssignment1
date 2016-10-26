@@ -11,3 +11,5 @@ prtest/*
 *.txt
 *.png
 *.pyo
+tags
+tags.idx

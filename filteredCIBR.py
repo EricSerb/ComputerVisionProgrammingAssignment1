@@ -7,7 +7,8 @@ from utils import gaussian_filter
 from aeCIBR import handler as cibr_handler
 
 hdr = '\nfdCIBR test\n-----------'
-
+marker = '+'
+color = 'g'
 
 class handler(cibr_handler):
     '''

@@ -10,6 +10,7 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from data import f_exists, f_join, f_mkdir
+from operator import attrgetter
 
 # __debug__ = False
 
@@ -40,11 +41,12 @@ class Manager(object):
     Manages pr calculations and maintains state for 
     avergaing, plotting, etc.
     '''
-    def __init__(self, data, sub_f, cmp=(lambda a, b, c: True)):
+    def __init__(self, data, mod, cmp=(lambda a, b, c: True)):
         
         # get list of classes, and save other args
         self.data = data
-        self.sub = f_join(data.dest, sub_f)
+        self.mod = mod
+        self.sub = f_join(data.dest, mod.__name__)
         self.imgcmp = cmp
         
         # double check directories are set up
@@ -57,7 +59,9 @@ class Manager(object):
         
         # grab PR objects for each qry class
         self.prs = {cat : PR() for cat in self.data.catlist}
-    
+        
+        # rank storage for later on
+        self.ranks = {}
     
     def test(self, cat, i, plot=True):
         '''
@@ -83,7 +87,12 @@ class Manager(object):
         self.prs[cat].feed(P, R, i)
         if plot:
             self.plotPR(cat, i, P, R)
-    
+        
+        ranks = self.calcRanks(qry[0])
+        mRanks = filter(lambda r: res[r[1].img.cat][self.data.idx(r[1].img.id)], ranks)
+        self.ranks.setdefault(qry[0].cat, []).append(
+            sum(m[0] for m in mRanks) / len(mRanks))
+        
     
     def calcPR(self, res, cat, k):
         '''
@@ -130,30 +139,6 @@ class Manager(object):
         plt.close(fig)
     
     
-    def avgPR(self):
-        '''
-        After running, this function will generate PR plots
-        for averages maintained by the PR objects.
-        '''
-        fig = plt.figure()
-        plt.suptitle('avg_PR')
-        plt.title('prec = o, rec = x')
-        plt.xlabel('Category')
-        plt.xticks([i for i in range(10)], [c for c in self.data.catlist])
-        plt.ylabel('Avg precision')
-        plt.ylim(0.0, 1.1)
-        plt.grid(True)
-        
-        for i, cat in enumerate(self.data.catlist):
-            plt.scatter(i, sum(self.prs[cat].pavg) / len(self.prs[cat].pavg), 
-                s=10, color='g', marker='o', alpha=0.6)
-            plt.scatter(i, sum(self.prs[cat].ravg) / len(self.prs[cat].ravg), 
-                s=20, color='b', marker='x', alpha=0.8)
-        
-        plt.savefig(f_join(self.sub, 'avg_PR.jpg'))
-        plt.close(fig)
-        
-    
     def fullPR(self, cat):
         '''
         Plots all the weighted averaged precisions from all tests run 
@@ -178,16 +163,64 @@ class Manager(object):
         
         plt.savefig(f_join(self.sub, cat, '_full_.jpg'))
         plt.close(fig)
-        
-        
-        
-    def plotRanks(self, id):
-        ranks = self.cmp.topranks
-        for imgid in ranks:
-            pass
     
     
-    def alltests(self, K, plots=['c1', 'c5', 'c9']):
+    def avgPR(self, recall=False, pfig=None):
+        '''
+        After running, this function will generate PR plots
+        for averages maintained by the PR objects.
+        '''
+        fig = plt.figure(pfig.number) if pfig else plt.figure()
+        plt.suptitle('avg_PR')
+        plt.title('prec = o, rec = x')
+        plt.xlabel('Category')
+        plt.xticks([i for i in range(len(self.data.catlist))], \
+            [c for c in self.data.catlist])
+        plt.ylabel('Avg precision')
+        plt.ylim(0.0, 1.1)
+        plt.grid(True)
+        
+        for i, cat in enumerate(self.data.catlist):
+            plt.scatter(i, sum(self.prs[cat].pavg) / len(self.prs[cat].pavg), 
+                s=10, color=self.mod.color, marker=self.mod.marker, alpha=0.6)
+                
+            if recall:
+                plt.scatter(i, sum(self.prs[cat].ravg) / len(self.prs[cat].ravg), 
+                    s=25, color='b', marker='x', alpha=0.8)
+        
+        if pfig is None:
+            plt.savefig(f_join(self.sub, 'avg_PR.jpg'))
+            plt.close(fig)
+        
+        
+    def calcRanks(self, qry):
+        assert qry.id in self.imgcmp.ranks
+        ranks = self.imgcmp.ranks[qry.id]
+        sranks = sorted(ranks, key=attrgetter('val'), reverse=True)
+        top = [(i, v) for i, v in enumerate(sranks)]
+        matches = filter(lambda d: d[1].img.cat == qry.cat, top)
+        return matches
+        
+    
+    def avgRanks(self, rfig=None):
+        fig = plt.figure(rfig.number) if rfig else plt.figure()
+        plt.xlabel('Category')
+        plt.xticks([i for i in range(len(self.data.catlist))], \
+            [c for c in self.data.catlist])
+        plt.ylabel('Average Rank r')
+        plt.ylim(0, 1000)
+        plt.grid(True)
+        
+        for i, c in enumerate(self.data.catlist):
+            rank = sum(self.ranks[c]) / len(self.ranks[c])
+            plt.scatter(i, rank, s=25, color=self.mod.color, marker=self.mod.marker, alpha=0.8)
+        
+        if rfig is None:
+            plt.savefig(f_join(self.sub, 'avg_Rank.jpg'))
+            plt.close(fig)
+    
+    
+    def alltests(self, K, plots=['c1', 'c5', 'c9'], pfig=None, rfig=None):
         '''
         Executes all tests in an ordered fashion.
         '''
@@ -209,7 +242,9 @@ class Manager(object):
         
         # we also print out the avg pr for each class 
         # on the same plot to compare the classes
-        self.avgPR()
+        self.avgPR(pfig=pfig)
         
+        # we also want to plot avg rankings for matches in categories
+        self.avgRanks(rfig=rfig)
         
         

@@ -7,23 +7,30 @@ Run 'python main.py -h' for info.
 '''
 import argparse as ap
 from time import time
-from data import Dataset
+from data import Dataset, f_join
 from prSys import Manager
 import aeCIBR as cibr
 import aeSIFT as sift
 import filteredCIBR as fcibr
 
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 
+precfig = plt.figure()
+rankfig = plt.figure()
 
-def runtest(dset, mod, dbg):
+def runtest(dset, mod):
+    global precfig, rankfig
     
     t = time()
     print(str(mod.hdr))
     
     handle = mod.handler(dset)
     
-    manage = Manager(dset, mod.__name__, cmp=handle)
-    manage.alltests(dset.catsz) # K
+    
+    manage = Manager(dset, mod, cmp=handle)
+    manage.alltests(dset.catsz, pfig=precfig, rfig=rankfig) # K
     
     with open('.'.join((mod.__name__, 'txt')), 'wb+') as fd:
         fd.write(str(mod.hdr) + '\n')
@@ -85,24 +92,31 @@ def main():
     args = p.parse_args()
     dset = Dataset(args.src, args.dir, download=args.retrieve, cases=3)
     
-    
     modmap = { \
         cibr.__name__ : (('1', 'aecibr', 'cibr'), cibr), \
         fcibr.__name__ : (('2', 'filtered', 'filteredcibr', 'fcibr'), fcibr), \
         sift.__name__ : (('3', 'sift', 'aesift'), sift), \
     }
     
-    foundmod = False
     if args.module is None:
         for mod in (cibr, fcibr, sift):
-            runtest(dset, mod, args.debug)
+            runtest(dset, mod)
     else:
+        foundmod = False
         for names in modmap:
             if args.module.lower() in modmap[names][0]:
-                runtest(dset, modmap[names][1], args.debug)
+                runtest(dset, modmap[names][1])
                 foundmod = True
-    if not foundmod:
-        print('Module {} does not exist.'.format(args.module))
+        if not foundmod:
+            print('Module {} does not exist.'.format(args.module))
+    
+    plt.figure(precfig.number)
+    plt.savefig(f_join(dset.dest, 'avg_Prec.jpg'))
+    plt.close(precfig)
+    plt.figure(rankfig.number)
+    plt.savefig(f_join(dset.dest, 'avg_Rank.jpg'))
+    plt.close(rankfig)
+        
         
 if __name__ == '__main__':
     main()

@@ -3,12 +3,13 @@ Computer Vision - FSU - CAP5415
 Adam Stallard, Eric Serbousek
 
 '''
-from sortedcontainers.sortedlist import SortedList as slist
-from utils import color_histo, color_thresh
-from prSys import Manager
+# from sortedcontainers.sortedlist import SortedList as slist
+from utils import color_histo, color_thresh, Rank
 import cv2
-import time
 
+
+marker = 'o'
+color = 'r'
 hdr = '\naeCIBR test\n-----------'
 
 class handler(object):
@@ -18,21 +19,14 @@ class handler(object):
     '''
     def __init__(self, dset, ifilter=None):
         self.ifilter = ifilter
-        # assert self.ifilter != -1, 'cibr handler: bad init argument: ifilter'
         self.saved = {}
         self.dset = dset
-        self.topranks = {}
+        self.ranks = {}
     
     
-    def addrank(self, r, id):
-        ranks = self.topranks[id]
-        if len(ranks) > 100:
-            if ranks[-1] > -r:
-                ranks.pop()
-                ranks.add(-r)
-        else:
-            ranks.add(-r)
-            assert -r in self.topranks[id]
+    def _rank(self, qry, oth, r):
+        self.ranks.setdefault(qry.id, []).append(Rank(oth, r))
+    
     
     def __call__(self, oth, qry, ifilter=None):
         '''
@@ -73,14 +67,11 @@ class handler(object):
         for (h1, h2, n, t) in zip(qhist, ohist, norms, thresh):
             res.append(cv2.compareHist(h1, h2, cv2.HISTCMP_INTERSECT))
         
-        self.topranks.setdefault(qry.id, slist())
-        self.addrank(sum(res) / len(res), qry.id)
-        
+        self._rank(qry, oth, sum(res) / len(res))
         
         for i in range(len(res)):
             if (res[i] / norms[i]) < thresh[i]:
                 return False
         return True
-        # return all((r / n) > t for r, n, t in zip(res, norms, thresh))
         
         
