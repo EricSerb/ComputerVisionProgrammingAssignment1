@@ -10,6 +10,7 @@ import cv2
 
 marker = 'o'
 color = 'r'
+marksz = 25
 hdr = '\naeCIBR test\n-----------'
 
 class handler(object):
@@ -17,8 +18,9 @@ class handler(object):
     Handles the functions of a cibr system using 
     histogram matching, thresholding, etc.
     '''
-    def __init__(self, dset, ifilter=None):
+    def __init__(self, dset, ifilter=None, gfilter=None):
         self.ifilter = ifilter
+        self.gfilter = gfilter
         self.saved = {}
         self.dset = dset
         self.ranks = {}
@@ -28,7 +30,7 @@ class handler(object):
         self.ranks.setdefault(qry.id, []).append(Rank(oth, r))
     
     
-    def __call__(self, oth, qry, ifilter=None):
+    def __call__(self, oth, qry, ifilter=None, gfilter=None):
         '''
         Note: icat2 is note used here. It has beeb left as 
         we were using it for debugging purposes up to now.
@@ -47,7 +49,7 @@ class handler(object):
         if qry.id in self.saved:
             qhist, thresh, norms = self.saved[qry.id]
         else:
-            qhist = color_histo(ifilter(qrydat) if ifilter else qrydat)
+            qhist = color_histo(gfilter(ifilter(qrydat)) if (ifilter and gfilter) else qrydat)
             thresh = color_thresh(qhist)
             norms = tuple(cv2.compareHist(t, t, cv2.HISTCMP_INTERSECT) \
                 for t in qhist)
@@ -56,7 +58,7 @@ class handler(object):
         if oth.id in self.saved:
             ohist = self.saved[oth.id][0]
         else:
-            ohist = color_histo(ifilter(othdat) if ifilter else othdat)
+            ohist = color_histo(gfilter(ifilter(othdat)) if (ifilter and gfilter) else othdat)
             othresh = color_thresh(qhist)
             onorms = tuple(cv2.compareHist(t, t, cv2.HISTCMP_INTERSECT) \
                 for t in qhist)

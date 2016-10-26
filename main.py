@@ -90,7 +90,7 @@ def main():
         
     # setup
     args = p.parse_args()
-    dset = Dataset(args.src, args.dir, download=args.retrieve, cases=3)
+    dset = Dataset(args.src, args.dir, download=args.retrieve, cases=100)
     
     modmap = { \
         cibr.__name__ : (('1', 'aecibr', 'cibr'), cibr), \
