@@ -10,3 +10,4 @@ prtest
 prtest/*
 *.txt
 *.png
+*.pyo

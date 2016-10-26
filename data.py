@@ -33,7 +33,7 @@ class Dataset(object):
     Encapsualtion of our dataset operations.
     '''
     def __init__(self, src, dest, \
-        cases=1, download=False, catsize=100):
+        cases=3, download=False, catsize=100):
         
         self.src = src
         self.dest = dest

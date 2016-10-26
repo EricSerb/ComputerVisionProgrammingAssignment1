@@ -11,6 +11,7 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 from data import f_exists, f_join, f_mkdir
 
+# __debug__ = False
 
 class PR(object):
     
@@ -179,6 +180,13 @@ class Manager(object):
         plt.close(fig)
         
         
+        
+    def plotRanks(self, id):
+        ranks = self.cmp.topranks
+        for imgid in ranks:
+            pass
+    
+    
     def alltests(self, K, plots=['c1', 'c5', 'c9']):
         '''
         Executes all tests in an ordered fashion.
@@ -189,16 +197,9 @@ class Manager(object):
         
         
         for c in self.data.catlist:
-            i = 0
             print(' testing {:.<9}'.format(c))
-            for img in self.data.cats[c]:
-                if i > K:
-                    break
-                assert img.cat == c, 'Category misalignment in data.cats'
-                for i in self.data.testcases[img.cat]:
-                    p = (img.cat in plots)
-                    self.test(img.cat, i, plot=p)
-                i += 1
+            for i in self.data.testcases[c]:
+                self.test(c, i, plot=(c in plots))
                 
         # after all tests are run create the full PR plots
         # -- these use the PR results for every qry img,

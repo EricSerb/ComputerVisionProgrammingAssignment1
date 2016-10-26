@@ -69,13 +69,18 @@ class handler(object):
             self.saved[oth.id] = ohist, othresh, onorms
         
         
-        self.topranks.setdefault(qry.id, slist())
         res = []
         for (h1, h2, n, t) in zip(qhist, ohist, norms, thresh):
             res.append(cv2.compareHist(h1, h2, cv2.HISTCMP_INTERSECT))
         
+        self.topranks.setdefault(qry.id, slist())
         self.addrank(sum(res) / len(res), qry.id)
         
-        return all((r / n) > t for r, n, t in zip(res, norms, thresh))
+        
+        for i in range(len(res)):
+            if (res[i] / norms[i]) < thresh[i]:
+                return False
+        return True
+        # return all((r / n) > t for r, n, t in zip(res, norms, thresh))
         
         
