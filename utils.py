@@ -8,20 +8,26 @@ code cleaner and more readable, and mainly shorter :p
 import cv2
 import numpy as np
 from operator import itemgetter
-from collections import Iterable
+from collections import Iterable, namedtuple as nt
 
+
+
+class imgobj(object):
+    def __init__(self, id, cat):
+        self.id, self.cat = id, cat
 
 class Otsu(object):
     def __init__(self, hist):
         self.hist = hist
         self.q = hist.cumsum()
-        self.thresh = 0
         self.I = len(hist)
+        self.thresh = int(self.I / 2)
         self.mf_min = np.inf
+        
     
     def __iter__(self):
         bins = np.arange(self.I)
-        for i in range(0, self.I):
+        for i in range(0, self.I - 1):
             p1, p2 = np.hsplit(self.hist, [i])
             q1, q2 = self.q[i], self.q[-1] - self.q[i]
             i1, i2 = np.hsplit(bins, [i])
@@ -37,7 +43,7 @@ class Otsu(object):
             self.thresh, self.mf_min = min(
                 ((t, mf), (self.thresh, self.mf_min)), 
                 key=itemgetter(1))
-        return self.thresh
+        return float(self.thresh)
 
 
 def grayscale_histo(img):
@@ -50,18 +56,15 @@ def color_thresh(hists):
         res.append(Otsu(h.flatten()).opt_thresh() / 256)
     return res
 
+
 def color_histo(img):
     nch = img.shape[-1]
-    res = tuple(cv2.calcHist(img, [i], None, [256], [0, 256]) for i in range(nch))
+    assert nch == 3
+    bins = 56
+    res = tuple(cv2.calcHist(img, [i], None, [bins], [0, 256]) for i in range(nch))
+    # if 0 in res[0][0] or [0] in res[0][0]:
+        # print res
     return res
-
-
-def cmp_img(hist1, img2, norm, thresh):
-    hist2 = color_histo(img2)
-    assert len(hist1) == len(hist2) == len(norm) == len(thresh)
-    res = tuple(True if (cv2.compareHist(h1, h2, cv2.HISTCMP_INTERSECT) / n) > t else False \
-        for (h1, h2, n, t) in zip(hist1, hist2, norm, thresh))
-    return all(res)
 
 
 def bilateral_filter(img):

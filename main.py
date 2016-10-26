@@ -18,26 +18,23 @@ import filteredCIBR as fcibr
 def runtest(dset, mod, dbg):
     
     t = time()
+    print(str(mod.hdr))
+    
     handle = mod.handler(dset)
     
-    # if 'init' in dir(mod):
-        # print('Initializing module: {}'.format(mod.__name__))
-        # mod.init(dset)
-    
-    print(str(mod.hdr))
     manage = Manager(dset, mod.__name__, cmp=handle)
     manage.alltests(dset.catsz) # K
     
     with open('.'.join((mod.__name__, 'txt')), 'wb+') as fd:
         fd.write(str(mod.hdr) + '\n')
-        for qc in dset.imgs: 
+        for cat in dset.catlist: 
             fd.write('best = {} : {}\n'.format(
-                qc, dset.imgs[qc][manage.prs[qc].best[-1]][0]))
+                cat, dset.cats[cat][manage.prs[cat].best[-1]].id))
             fd.write('wrst = {} : {}\n'.format(
-                qc, dset.imgs[qc][manage.prs[qc].wrst[-1]][0]))
+                cat, dset.cats[cat][manage.prs[cat].wrst[-1]].id))
         fd.write('{} sec\n'.format(time() - t))
         
-    print(time() - t)
+    print('\n time: {:0.04f} s\n'.format(time() - t))
 
 
 def main():
@@ -86,7 +83,7 @@ def main():
         
     # setup
     args = p.parse_args()
-    dset = Dataset(args.src, args.dir, download=args.retrieve, cases=100)
+    dset = Dataset(args.src, args.dir, download=args.retrieve, cases=1)
     
     
     modmap = { \

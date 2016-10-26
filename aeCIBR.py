@@ -3,7 +3,8 @@ Computer Vision - FSU - CAP5415
 Adam Stallard, Eric Serbousek
 
 '''
-from utils import cmp_img, color_histo, color_thresh
+from sortedcontainers.sortedlist import SortedList as slist
+from utils import color_histo, color_thresh
 from prSys import Manager
 import cv2
 import time
@@ -16,12 +17,24 @@ class handler(object):
     histogram matching, thresholding, etc.
     '''
     def __init__(self, dset, ifilter=None):
-        self.ifilter = ifilter if hasattr(ifilter, '__call__') else (lambda x: x)
-        assert self.ifilter != -1, 'cibr handler: bad init argument: ifilter'
-        self.saved_cmp = {icat : {} for icat in dset.imgs}
+        self.ifilter = ifilter
+        # assert self.ifilter != -1, 'cibr handler: bad init argument: ifilter'
+        self.saved = {}
         self.dset = dset
+        self.topranks = {}
     
-    def __call__(self, iNode1, iNode2, icat1, icat2, ifilter=None):
+    
+    def addrank(self, r, id):
+        ranks = self.topranks[id]
+        if len(ranks) > 100:
+            if ranks[-1] > -r:
+                ranks.pop()
+                ranks.add(-r)
+        else:
+            ranks.add(-r)
+            assert -r in self.topranks[id]
+    
+    def __call__(self, oth, qry, ifilter=None):
         '''
         Note: icat2 is note used here. It has beeb left as 
         we were using it for debugging purposes up to now.
@@ -31,24 +44,38 @@ class handler(object):
         Use cmp function from utils module.
         If a filter has been set, it will be used.
         '''
-        i2, i1 = iNode1[0], iNode2[0]
-        im2, im1 = iNode1[1], iNode2[1]
+        othdat = oth[-1]
+        qrydat = qry[-1]
+        oth = oth[0]
+        qry = qry[0]
         
-        t_hist = thresh = norms = None
-        if icat1 in self.saved_cmp:
-            if i1 in self.saved_cmp[icat1]:
-                t_hist, thresh, norms = self.saved_cmp[icat1][i1]
-                
-        if t_hist is None:
-        
-            t_hist = color_histo(ifilter(im1) if ifilter else im1)
-                
-            thresh = color_thresh(t_hist)
-            
+        # cache checking for histograms of both images
+        if qry.id in self.saved:
+            qhist, thresh, norms = self.saved[qry.id]
+        else:
+            qhist = color_histo(ifilter(qrydat) if ifilter else qrydat)
+            thresh = color_thresh(qhist)
             norms = tuple(cv2.compareHist(t, t, cv2.HISTCMP_INTERSECT) \
-                for t in t_hist)
-                
-            self.saved_cmp.setdefault(icat1, {})[i1] = t_hist, thresh, norms
-            
-        return cmp_img(t_hist, ifilter(im2) if ifilter else im2, norms, thresh)
+                for t in qhist)
+            self.saved[qry.id] = qhist, thresh, norms
+        
+        if oth.id in self.saved:
+            ohist = self.saved[oth.id][0]
+        else:
+            ohist = color_histo(ifilter(othdat) if ifilter else othdat)
+            othresh = color_thresh(qhist)
+            onorms = tuple(cv2.compareHist(t, t, cv2.HISTCMP_INTERSECT) \
+                for t in qhist)
+            self.saved[oth.id] = ohist, othresh, onorms
+        
+        
+        self.topranks.setdefault(qry.id, slist())
+        res = []
+        for (h1, h2, n, t) in zip(qhist, ohist, norms, thresh):
+            res.append(cv2.compareHist(h1, h2, cv2.HISTCMP_INTERSECT))
+        
+        self.addrank(sum(res) / len(res), qry.id)
+        
+        return all((r / n) > t for r, n, t in zip(res, norms, thresh))
+        
         

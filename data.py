@@ -14,6 +14,7 @@ from requests import get as wget
 from requests.exceptions import RequestException
 import numpy as np
 from cv2 import imread
+from utils import imgobj
 
 from os import \
     makedirs as f_mkdir, \
@@ -37,6 +38,10 @@ class Dataset(object):
         self.src = src
         self.dest = dest
         self.catsz = int(catsize)
+        self.cats = {}
+        self.catlist = []
+        self._dat = {}
+        
         if isinstance(src, (bytes, str)) and download:
             f_path = self.download(src)
             self.unzip(f_path)
@@ -45,9 +50,11 @@ class Dataset(object):
         self.f_path = f_join(self.rdir, 'image.orig')
         print('Dataset: {}'.format(self.f_path))
         
+        self.files = []
         self.imgs = {}
         self.load()
         assert self.imgs
+        
         
         self.testcases = None
         if type(cases) in (int, float):
@@ -88,7 +95,7 @@ class Dataset(object):
         n = 0 if n < 0 else n
         n = self.catsz if n > self.catsz else n
         self.testcases = self.testcases or \
-            {qc : sample(range(0, self.catsz), n) for qc in self.imgs}
+            {qc : sample(range(0, self.catsz), n) for qc in self.catlist}
         pprint('Test cases:')
         pprint(self.testcases)
     
@@ -96,19 +103,51 @@ class Dataset(object):
     def load(self):
         print('Loading images...')
         try:
-            myfiles = f_list(self.f_path)
-            sortedf = sorted([int(f_splitext(f)[0]) for f in myfiles])
-            myfiles = ['{}.jpg'.format(i) for i in sortedf]
+            files = f_list(self.f_path)
+            sfiles = sorted([int(f_splitext(f)[0]) for f in files])
+            self.files = tuple('{}.jpg'.format(i) for i in sfiles)
             
-            for f in myfiles:
+            for f in self.files:
                 
                 p = f_join(f_cwd(), f_join(self.f_path, f))
                 c = 'c{}'.format((int(f_splitext(f)[0]) // self.catsz) + 1)
                 
-                # putting everything in memory here
-                self.imgs.setdefault(c, []).append((f, imread(p)))
+                img = imgobj(f, c)
+                self._dat[img.id] = imread(p)
                 
+                self.cats.setdefault(c, []).append(img)
+                self.imgs[f] = img
+                # putting everything in memory here
+                # self.imgs.setdefault(c, []).append((f, imread(p)))
+            
+            print(list(c for c in self.cats))
+            
+            scat = sorted(int(c[1:]) for c in self.cats)
+            self.catlist = ['c{}'.format(sc) for sc in scat]
+            
         except (OSError, IOError) as e:
             print('Did you forget to download the data with \'-r\'?')
             print('Or maybe check your permissions?')
             raise e
+        
+        assert len(self.cats) == len(self.catlist) and \
+            self.catsz == int(len(self.imgs) / len(self.cats)), \
+            'Error: Category alignment.'
+    
+    
+    def get(self, id):
+        assert id in self._dat, 'Dataset.get: bad id'
+        return self._dat[id]
+    
+    # def get(self, cat, i):
+        # assert id in self._dat, 'Dataset.get: bad id'
+        # return self.imgs[self.cats[cat][i].id]
+    
+    def __iter__(self):
+        '''
+        Generator to walk over this data set in an ordered fashion.
+        '''
+        assert self.files
+        for f in self.files:
+            yield f
+    

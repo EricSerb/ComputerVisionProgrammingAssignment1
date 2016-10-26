@@ -43,54 +43,55 @@ class Manager(object):
         
         # get list of classes, and save other args
         self.data = data
-        self.qry_classes = ['c{}'.format(i) \
-            for i in sorted(int(c[1:]) for c in self.data.imgs)]
         self.sub = f_join(data.dest, sub_f)
         self.imgcmp = cmp
         
         # double check directories are set up
         if not f_exists(self.sub):
             f_mkdir(self.sub)
-        for qc in self.qry_classes:
-            sub_c = f_join(self.sub, qc)
+        for c_dir in self.data.catlist:
+            sub_c = f_join(self.sub, c_dir)
             if not f_exists(sub_c):
                 f_mkdir(sub_c)
         
         # grab PR objects for each qry class
-        self.prs = {qc : PR() for qc in self.qry_classes}
+        self.prs = {cat : PR() for cat in self.data.catlist}
     
     
-    def test(self, qc, i, plot=True):
+    def test(self, cat, i, plot=True):
         '''
         Using the i'th img as the qry image, 
-        run a PR test on class qc.
+        run a PR test on class cat.
         '''
-        assert qc in self.data.imgs
-        assert i < len(self.data.imgs[qc])
+        assert cat in self.data.catlist
+        assert i < len(self.data.cats[cat])
         
-        qi = self.data.imgs[qc][i]
+        qry = self.data.cats[cat][i]
+        qry = [qry, self.data.get(qry.id)]
         
-        res = {c : [self.imgcmp(o, qi, qc, c) for o in self.data.imgs[c]] \
-            for c in self.qry_classes}
-        
-        P, R = zip(*[self.calcPR(res, qc, n)
-            for n in range(1, len(res[qc]) + 1)])
+        res = {}
+        for oth in self.data:
+            o = self.data.imgs[oth]
+            res.setdefault(o.cat, []).append(self.imgcmp([o, self.data.get(o.id)], qry))
+
+        P, R = zip(*[self.calcPR(res, cat, n)
+            for n in range(1, len(res[cat]) + 1)])
         
         # feed the running pr totals with the last PR
         # (i.e. the one ran for n == 100 images)
-        self.prs[qc].feed(P, R, i)
+        self.prs[cat].feed(P, R, i)
         if plot:
-            self.plotPR(qc, i, P, R)
+            self.plotPR(cat, i, P, R)
     
     
-    def calcPR(self, res, qc, k):
+    def calcPR(self, res, cat, k):
         '''
         Internal method for extracting P,R values. 
         res = container storing results by class and img within.
-        qc = class of which to calc from.
+        cat = class of which to calc from.
         k = number of imgs from each class to retrieve.
         '''
-        n_crrct = float(res[qc][:k].count(True))
+        n_crrct = float(res[cat][:k].count(True))
         n_mtchd = float(sum(res[j][:k].count(True) for j in res))
         try:
             p = n_crrct / n_mtchd
@@ -101,10 +102,10 @@ class Manager(object):
         return p, r
     
     
-    def plotPR(self, qc, i, P, R):
+    def plotPR(self, cat, i, P, R):
         '''
         Handles making simple PR plot with mpl.
-        Data came from test results using qry image at data.imgs[qc][i].
+        Data came from test results using qry image at data.imgs[cat][i].
         '''
         assert type(P) == type(R)
         assert type(P) in (list, tuple)
@@ -123,7 +124,7 @@ class Manager(object):
         
         plt.plot(P, R, linestyle='--')
         
-        plt.savefig(f_join(self.sub, qc, 
+        plt.savefig(f_join(self.sub, cat, 
             '{:03d}_pr.jpg'.format(i)))
         plt.close(fig)
     
@@ -137,21 +138,22 @@ class Manager(object):
         plt.suptitle('avg_PR')
         plt.title('prec = o, rec = x')
         plt.xlabel('Category')
-        plt.xticks([i for i in range(10)], [c for c in self.qry_classes])
+        plt.xticks([i for i in range(10)], [c for c in self.data.catlist])
         plt.ylabel('Avg precision')
         plt.ylim(0.0, 1.1)
+        plt.grid(True)
         
-        for i, qc in enumerate(self.qry_classes):
-            plt.scatter(i, sum(self.prs[qc].pavg) / len(self.prs[qc].pavg), 
+        for i, cat in enumerate(self.data.catlist):
+            plt.scatter(i, sum(self.prs[cat].pavg) / len(self.prs[cat].pavg), 
                 s=10, color='g', marker='o', alpha=0.6)
-            plt.scatter(i, sum(self.prs[qc].ravg) / len(self.prs[qc].ravg), 
+            plt.scatter(i, sum(self.prs[cat].ravg) / len(self.prs[cat].ravg), 
                 s=20, color='b', marker='x', alpha=0.8)
         
         plt.savefig(f_join(self.sub, 'avg_PR.jpg'))
         plt.close(fig)
         
     
-    def fullPR(self, qc):
+    def fullPR(self, cat):
         '''
         Plots all the weighted averaged precisions from all tests run 
         on each class.
@@ -163,8 +165,8 @@ class Manager(object):
         plt.ylabel('Recall')
         plt.ylim(0, 1.5)
         
-        pavg = self.prs[qc].pavg
-        ravg = self.prs[qc].ravg
+        pavg = self.prs[cat].pavg
+        ravg = self.prs[cat].ravg
         dl = len(pavg)
         
         for (p, r, sz, c) in zip(\
@@ -173,7 +175,7 @@ class Manager(object):
             
             plt.scatter(p, r, s=sz, color=c, alpha=0.5)
         
-        plt.savefig(f_join(self.sub, qc, '_full_.jpg'))
+        plt.savefig(f_join(self.sub, cat, '_full_.jpg'))
         plt.close(fig)
         
         
@@ -185,17 +187,24 @@ class Manager(object):
         assert K > 0 and K < self.data.catsz + 1, \
             'Invalid K value. Must be in [0..{}]'.format(self.data.catsz)
         
-        for qc in self.qry_classes:
-            print(' testing {}...'.format(qc))
-            for i in self.data.testcases[qc]:
-                p = (qc in plots)
-                self.test(qc, i, plot=p)
+        
+        for c in self.data.catlist:
+            i = 0
+            print(' testing {:.<9}'.format(c))
+            for img in self.data.cats[c]:
+                if i > K:
+                    break
+                assert img.cat == c, 'Category misalignment in data.cats'
+                for i in self.data.testcases[img.cat]:
+                    p = (img.cat in plots)
+                    self.test(img.cat, i, plot=p)
+                i += 1
                 
         # after all tests are run create the full PR plots
         # -- these use the PR results for every qry img,
         # -- but only taking the pr for n = 100 
-        for qc in self.qry_classes:
-            self.fullPR(qc)
+        for cat in self.data.catlist:
+            self.fullPR(cat)
         
         # we also print out the avg pr for each class 
         # on the same plot to compare the classes
