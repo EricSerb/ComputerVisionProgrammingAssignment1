@@ -63,6 +63,7 @@ def mycomparer(a, b, qc, qc2=None, best_matches=[]):
     im2, im1 = a[1], b[1]
     
     ds1 = saved_descs[qc][i1]
+    ds2 = saved_descs[qc2][i2]
 
     bestCount = 0
     bestClass = None
@@ -70,23 +71,29 @@ def mycomparer(a, b, qc, qc2=None, best_matches=[]):
     for c in saved_flann:
         
         # get matches for this flann matcher
-        matches = saved_flann[c].knnMatch(ds1, k=2)
+        matches = saved_flann[c].knnMatch(ds2, ds1, k=2)
     
         # ratio test as per Lowe's paper
         matchCount = 0
-        for i,(m,n) in enumerate(matches):
+        for m, n in matches:
             if m.distance < 0.8 * n.distance:
                 matchCount += 1
 
     # store best matches based on match count
-    if not best_matches or len(best_matches) < 6:
-        best_matches.append(tuple(i1, matchCount))
+    if (not best_matches) or len(best_matches) < 5 and not any([i1 == x[0] for x in best_matches]):
+        print('here', len(best_matches))
+        best_matches.append((i1, matchCount))
+        best_matches = sorted(best_matches, key=itemgetter(1), reverse=True)
 
     elif matchCount > best_matches[-1][1]:
+        import sys
+        print(best_matches)
         best_matches.pop()
-        best_matches.append(tuple(i1, matchCount))
+        best_matches.append((i1, matchCount))
         # sort in reverse order to keep smallest at the back
-        sorted(best_matches, key=itemgetter(1), reversed=True)
+        best_matches = sorted(best_matches, key=itemgetter(1), reverse=True)
+        print(best_matches)
+        sys.stdin.readline()
 
     else:
         # if this is reached then best_matches has 5 items and this pic did
