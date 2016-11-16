@@ -10,8 +10,8 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from data import f_exists, f_join, f_mkdir
-from operator import attrgetter
-
+from operator import attrgetter, itemgetter
+import sys
 
 class PR(object):
     
@@ -58,7 +58,7 @@ class Manager(object):
                 f_mkdir(sub_c)
         
         # grab PR objects for each qry class
-        self.prs = {cat : PR() for cat in self.data.catlist}
+        self.prs = {}
         
         # rank storage for later on
         self.ranks = {}
@@ -71,50 +71,43 @@ class Manager(object):
         assert cat in self.data.catlist
         assert i < len(self.data.cats[cat])
         
-<<<<<<< HEAD
         qry = self.data.cats[cat][i]
         qry = [qry, self.data.get(qry.id)]
-=======
-        res = {c : [self.imgcmp(o, qi, qc, c, best_matches=self.best_matches)
-                    for o in self.data[c]] for c in self.qry_classes}
->>>>>>> 08e05ef4e28e76a973c28e9ffbc5a301e37629b2
         
-        res = {}
+        res = []
         for oth in self.data:
             o = self.data.imgs[oth]
-            res.setdefault(o.cat, []).append(self.imgcmp([o, self.data.get(o.id)], qry))
-
-        P, R = zip(*[self.calcPR(res, cat, n)
-            for n in range(1, len(res[cat]) + 1)])
+            res.append((o, self.imgcmp([o, self.data.get(o.id)], qry)))
+        
+        res = sorted(res, key=itemgetter(1), reverse=True)
+        
+        P, R = self.calcPR(res, qry[0].cat)
         
         # feed the running pr totals with the last PR
         # (i.e. the one ran for n == 100 images)
-        self.prs[cat].feed(P, R, i)
+        self.prs.setdefault(qry[0].cat, PR()).feed(P, R, i)
         if plot:
             self.plotPR(cat, i, P, R)
         
-        ranks = self.calcRanks(qry[0])
-        mRanks = filter(lambda r: res[r[1].img.cat][self.data.idx(r[1].img.id)], ranks)
-        self.ranks.setdefault(qry[0].cat, []).append(
-            sum(m[0] for m in mRanks) / len(mRanks) if mRanks else 0.0)
+        ranks = self.calcRanks(qry[0], res)
+        
+        self.ranks.setdefault(qry[0].cat, []).append(ranks)
         
     
-    def calcPR(self, res, cat, k):
+    def calcPR(self, res, cat):
         '''
         Internal method for extracting P,R values. 
         res = container storing results by class and img within.
         cat = class of which to calc from.
         k = number of imgs from each class to retrieve.
         '''
-        n_crrct = float(res[cat][:k].count(True))
-        n_mtchd = float(sum(res[j][:k].count(True) for j in res))
-        try:
-            p = n_crrct / n_mtchd
-        except ZeroDivisionError:
-            p = 0.0
-            pass
-        r = n_crrct / k
-        return p, r
+        # res = [(oth, val), ...]
+        P, R = [], []
+        for k in range(1, self.data.catsz + 1):
+            n_crrct = list(r[0].cat for r in res[:k]).count(cat)
+            P.append(float(n_crrct) / k)
+            R.append(float(n_crrct) / self.data.catsz)
+        return P, R
     
     
     def plotPR(self, cat, i, P, R):
@@ -194,13 +187,12 @@ class Manager(object):
             plt.close(fig)
         
         
-    def calcRanks(self, qry):
-        assert qry.id in self.imgcmp.ranks
-        ranks = self.imgcmp.ranks[qry.id]
-        sranks = sorted(ranks, key=attrgetter('val'), reverse=True)
-        top = [(i, v) for i, v in enumerate(sranks)]
-        matches = filter(lambda d: d[1].img.cat == qry.cat, top)
-        return matches
+    def calcRanks(self, qry, res):
+        # res = [(oth, val), ...]
+        top = [(i, r[0]) for i, r in enumerate(res)]
+        # top = [(rank, (oth, val)), ...]
+        ranks = filter(lambda d: d[1].cat == qry.cat, top)
+        return list(r[0] for r in ranks)
         
     
     def avgRanks(self, rfig=None):
@@ -213,7 +205,11 @@ class Manager(object):
         plt.grid(True)
         
         for i, c in enumerate(self.data.catlist):
-            rank = sum(self.ranks[c]) / len(self.ranks[c])
+            # self.ranks == { cat : [[ranks], ... for each qryimg] }
+            rank = sum(r for s in self.ranks[c] for r in s) \
+                / (len(self.ranks[c]) * self.data.catsz)
+            
+            # rank = sum(self.ranks[c]) / len(self.ranks[c])
             plt.scatter(i, rank, s=25, color=self.mod.color, marker=self.mod.marker, alpha=0.8)
         
         if rfig is None:
