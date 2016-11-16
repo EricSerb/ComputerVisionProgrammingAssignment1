@@ -14,7 +14,7 @@ from requests import get as wget
 from requests.exceptions import RequestException
 import numpy as np
 from cv2 import imread
-from utils import imgobj
+from utils import imgobj, flatten
 
 from os import \
     makedirs as f_mkdir, \

@@ -82,6 +82,10 @@ def main():
             'default' : 'res',
             'help' : 'specify results directory',
         }),
+        't' : ('tests', {
+            'default' : 3,
+            'help' : 'specify number of qry images to test',
+        }),
     }
     
     for i in pargs:
@@ -90,7 +94,7 @@ def main():
         
     # setup
     args = p.parse_args()
-    dset = Dataset(args.src, args.dir, download=args.retrieve, cases=3)
+    dset = Dataset(args.src, args.dir, download=args.retrieve, cases=int(args.tests))
     
     modmap = { \
         cibr.__name__ : (('1', 'aecibr', 'cibr'), cibr), \
