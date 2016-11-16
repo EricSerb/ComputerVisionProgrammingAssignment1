@@ -1,0 +1,24 @@
+
+aeSIFT test
+-----------
+best = c1 : 69.jpg
+wrst = c1 : 76.jpg
+best = c2 : 141.jpg
+wrst = c2 : 144.jpg
+best = c3 : 253.jpg
+wrst = c3 : 229.jpg
+best = c4 : 378.jpg
+wrst = c4 : 355.jpg
+best = c5 : 424.jpg
+wrst = c5 : 485.jpg
+best = c6 : 567.jpg
+wrst = c6 : 555.jpg
+best = c7 : 651.jpg
+wrst = c7 : 690.jpg
+best = c8 : 726.jpg
+wrst = c8 : 745.jpg
+best = c9 : 867.jpg
+wrst = c9 : 862.jpg
+best = c10 : 907.jpg
+wrst = c10 : 998.jpg
+1029.92881799 sec

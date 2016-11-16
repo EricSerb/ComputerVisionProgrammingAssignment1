@@ -1,0 +1,24 @@
+
+fdCIBR test
+-----------
+best = c1 : 5.jpg
+wrst = c1 : 88.jpg
+best = c2 : 146.jpg
+wrst = c2 : 160.jpg
+best = c3 : 203.jpg
+wrst = c3 : 264.jpg
+best = c4 : 354.jpg
+wrst = c4 : 374.jpg
+best = c5 : 495.jpg
+wrst = c5 : 425.jpg
+best = c6 : 556.jpg
+wrst = c6 : 534.jpg
+best = c7 : 629.jpg
+wrst = c7 : 680.jpg
+best = c8 : 707.jpg
+wrst = c8 : 700.jpg
+best = c9 : 822.jpg
+wrst = c9 : 844.jpg
+best = c10 : 924.jpg
+wrst = c10 : 980.jpg
+139.218826056 sec

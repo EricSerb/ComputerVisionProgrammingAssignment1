@@ -1,0 +1,24 @@
+
+aeCIBR test
+-----------
+best = c1 : 7.jpg
+wrst = c1 : 88.jpg
+best = c2 : 146.jpg
+wrst = c2 : 160.jpg
+best = c3 : 203.jpg
+wrst = c3 : 213.jpg
+best = c4 : 345.jpg
+wrst = c4 : 374.jpg
+best = c5 : 495.jpg
+wrst = c5 : 422.jpg
+best = c6 : 539.jpg
+wrst = c6 : 534.jpg
+best = c7 : 604.jpg
+wrst = c7 : 694.jpg
+best = c8 : 760.jpg
+wrst = c8 : 744.jpg
+best = c9 : 822.jpg
+wrst = c9 : 844.jpg
+best = c10 : 990.jpg
+wrst = c10 : 911.jpg
+139.981201887 sec
