@@ -11,6 +11,7 @@ marker = '+'
 color = 'g'
 marksz = 35
 
+<<<<<<< HEAD
 class handler(cibr_handler):
     '''
     Uses the basic cibr handler but with a filter.
@@ -22,6 +23,20 @@ class handler(cibr_handler):
         Matcher calls super class always with filter on.
         '''
         super(self.__class__, self).__init__(dset, ifilter=bilateral_filter, gfilter=gaussian_filter)
+=======
+saved_cmp = {}
+def mycomparer(a, b, qc, qc2, best_matches=[]):
+    
+    i2, i1 = a[0], b[0]
+    im2, im1 = a[1], b[1]
+    
+    t_hist = thresh = norms = None
+    if qc in saved_cmp:
+        if i1 in saved_cmp[qc]:
+            t_hist, thresh, norms = saved_cmp[qc][i1]
+            
+    if t_hist is None:
+>>>>>>> 08e05ef4e28e76a973c28e9ffbc5a301e37629b2
         
     def __call__(self, o, q):
         '''

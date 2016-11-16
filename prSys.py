@@ -47,6 +47,7 @@ class Manager(object):
         self.mod = mod
         self.sub = f_join(data.dest, mod.__name__)
         self.imgcmp = cmp
+        self.best_matches = []
         
         # double check directories are set up
         if not f_exists(self.sub):
@@ -70,8 +71,13 @@ class Manager(object):
         assert cat in self.data.catlist
         assert i < len(self.data.cats[cat])
         
+<<<<<<< HEAD
         qry = self.data.cats[cat][i]
         qry = [qry, self.data.get(qry.id)]
+=======
+        res = {c : [self.imgcmp(o, qi, qc, c, best_matches=self.best_matches)
+                    for o in self.data[c]] for c in self.qry_classes}
+>>>>>>> 08e05ef4e28e76a973c28e9ffbc5a301e37629b2
         
         res = {}
         for oth in self.data:

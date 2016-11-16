@@ -8,6 +8,7 @@ from utils import color_histo, color_thresh, Rank
 import cv2
 
 
+<<<<<<< HEAD
 marker = 'o'
 color = 'r'
 marksz = 25
@@ -24,6 +25,13 @@ class handler(object):
         self.saved = {}
         self.dset = dset
         self.ranks = {}
+=======
+saved_cmp = {}
+def mycomparer(a, b, qc, qc2, best_matches=[]):
+    
+    i2, i1 = a[0], b[0]
+    im2, im1 = a[1], b[1]
+>>>>>>> 08e05ef4e28e76a973c28e9ffbc5a301e37629b2
     
     
     def _rank(self, qry, oth, r):
