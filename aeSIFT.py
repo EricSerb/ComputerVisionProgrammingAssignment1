@@ -21,6 +21,7 @@ from utils import cmp_img, color_histo, color_thresh
 from prSys import Manager
 import cv2
 import time
+from operator import itemgetter
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -28,7 +29,6 @@ import matplotlib.pyplot as plt
 
 # check cv2.__version__ == 3.1.0-dev
 assert 'xfeatures2d' in dir(cv2), 'opencv tools missing: xfeatures2d'
-
 
 debugging = False
 saved_descs = {}
@@ -56,14 +56,14 @@ def getfeatures(qc, img):
     saved_descs[qc][img[0]] = ds
 
 
-def mycomparer(a, b, qc, qc2=None):
+def mycomparer(a, b, qc, qc2=None, best_matches=[]):
     global debugging, sift, saved_flann, saved_descs
-    
+
     i2, i1 = a[0], b[0]
     im2, im1 = a[1], b[1]
     
     ds1 = saved_descs[qc][i1]
-    
+
     bestCount = 0
     bestClass = None
     
@@ -77,12 +77,27 @@ def mycomparer(a, b, qc, qc2=None):
         for i,(m,n) in enumerate(matches):
             if m.distance < 0.8 * n.distance:
                 matchCount += 1
-        
-        # keep track of best
-        if matchCount > bestCount:
-            bestCount, bestClass = matchCount, c
-    
-    return bestClass == qc2
+
+    # store best matches based on match count
+    if not best_matches or len(best_matches) < 6:
+        best_matches.append(tuple(i1, matchCount))
+
+    elif matchCount > best_matches[-1][1]:
+        best_matches.pop()
+        best_matches.append(tuple(i1, matchCount))
+        # sort in reverse order to keep smallest at the back
+        sorted(best_matches, key=itemgetter(1), reversed=True)
+
+    else:
+        # if this is reached then best_matches has 5 items and this pic did
+        # not match as well as those pictures
+        pass
+
+    # keep track of best
+    if matchCount > bestCount:
+        bestCount, bestClass = matchCount, c
+
+    return bestClass == qc
 
 
 def runtest(d, cases, debug=False):
@@ -102,6 +117,7 @@ def runtest(d, cases, debug=False):
     
     manage = Manager(d, __name__, cmp=mycomparer)
     manage.alltests(N=100, pick3=cases)
+    print(manage.best_matches)
     
     with open('.'.join((__name__, 'txt')), 'wb+') as fd:
         fd.write('start_________________')

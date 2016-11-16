@@ -54,6 +54,7 @@ class Manager(object):
             for i in sorted(int(c[1:]) for c in data)]
         self.sub = f_join(res_dir, sub_f)
         self.imgcmp = cmp
+        self.best_matches = []
         
         # double check directories are set up
         if not f_exists(self.sub):
@@ -77,8 +78,8 @@ class Manager(object):
         
         qi = self.data[qc][i]
         
-        res = {c : [self.imgcmp(o, qi, qc, c) for o in self.data[c]] \
-            for c in self.qry_classes}
+        res = {c : [self.imgcmp(o, qi, qc, c, best_matches=self.best_matches)
+                    for o in self.data[c]] for c in self.qry_classes}
         
         P, R= zip(*[self.calcPR(res, qc, n)
             for n in range(1, len(res[qc]) + 1)])
