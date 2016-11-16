@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 
 # check cv2.__version__ == 3.1.0-dev
 assert 'xfeatures2d' in dir(cv2), 'opencv tools missing: xfeatures2d'
-
+# TODO still need to test this and stop the training so not always match class
 debugging = False
 saved_descs = {}
 saved_flann = {}
